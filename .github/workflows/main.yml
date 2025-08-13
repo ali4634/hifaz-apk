@@ -8,37 +8,50 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: 📦 Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: 🛠 Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Setup Java (JDK 17)
+      - name: ☕ Setup Java (JDK 17)
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Install dependencies
+      - name: 📥 Install NPM dependencies
         run: npm install
-      
-      - name: Setup Capacitor
+
+      - name: ⚙️ Setup Capacitor & Android
         run: |
           npm install -g @capacitor/cli
           npm install @capacitor/core @capacitor/android @capacitor/share
-          npx cap add android
+          npx cap sync android
 
-      - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: assembleDebug
-          build-root-directory: android
+      - name: 📁 Verify Android folder
+        run: |
+          echo "Checking android folder..."
+          ls -la android || (echo "❌ Android folder missing!" && exit 1)
 
-      - name: Upload APK
+      - name: 🧪 Check Gradle wrapper
+        run: |
+          if [ ! -f android/gradlew ]; then
+            echo "❌ gradlew not found in android folder"
+            exit 1
+          fi
+          chmod +x android/gradlew
+
+      - name: 🏗 Build APK with Gradle
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: 📤 Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: hifaz-tracker-apk
