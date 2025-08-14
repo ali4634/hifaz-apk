@@ -5,35 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Hifaz Tracker</title>
     
-    <!-- Manifest and Icons (پاتھ درست کر دیے گئے ہیں) -->
     <meta name="theme-color" content="#3498db"/>
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
     
-    <!-- Using Font Awesome from CDN for other icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
-    <!-- Online Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <style>
-        /* مقامی فونٹ کو ہٹا دیا گیا ہے کیونکہ assets فولڈر موجود نہیں */
+    <!-- *** Capacitor.js (سب سے اہم) *** -->
+    <script src="capacitor.js"></script>
 
+    <style>
         :root {
             --primary-color: #3498db; --secondary-color: #2980b9; --success-color: #27ae60;
             --danger-color: #e74c3c; --warning-color: #f39c12; --light-color: #ecf0f1;
             --dark-color: #2c3e50; --absent-color: #ffecec; --present-color: #e8f5e9;
-            --inactive-color: #fff3e0; /* Color for inactive students card */
+            --inactive-color: #fff3e0;
             --border-radius: 8px; --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         body {
-            font-family: 'Noto Nastaliq Urdu', 'Segoe UI', Tahoma, sans-serif; /* فال بیک فونٹ شامل کیا گیا */
+            font-family: 'Noto Nastaliq Urdu', 'Segoe UI', Tahoma, sans-serif;
             margin: 0; padding: 10px;
             background-color: #f5f7fa; direction: rtl; font-size: 15px; color: #333;
             line-height: 1.6; overscroll-behavior-y: contain;
         }
-        /* باقی تمام CSS جوں کا توں رہے گا */
         .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
         h1, h2, h3, h4, h5 { color: var(--dark-color); font-weight: 700; }
         h1 { text-align: center; margin-bottom: 15px; font-size: 1.5em; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); }
@@ -79,6 +76,7 @@
         .para-selector-container select { flex-grow: 1; padding: 8px; font-size: 1em; border-radius: var(--border-radius); }
         .save-btn-full { width: 100%; padding: 12px; font-size: 1.1em; margin-top: 15px; background-color: var(--success-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;}
         .management-section { margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: var(--border-radius); border: 1px solid #ddd; }
+        .month-selector { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -126,7 +124,7 @@
             <div class="management-section">
                 <h3>بیک اپ اور بحالی</h3>
                 <p style="font-size:0.9em; color:#555;">اپنے تمام ڈیٹا کا بیک اپ ڈاؤن لوڈ کریں یا پہلے سے محفوظ شدہ بیک اپ کو بحال کریں۔</p>
-                <p style="font-size:0.8em; color:var(--danger-color); margin-top:-5px; margin-bottom:10px;"><b>نوٹ:</b> بیک اپ فائل آپ کے فون یا کمپیوٹر کے 'Downloads' فولڈر میں محفوظ ہو جائے گی۔</p>
+                <p style="font-size:0.8em; color:var(--danger-color); margin-top:-5px; margin-bottom:10px;"><b>نوٹ:</b> بیک اپ فائل شیئر مینیو کے ذریعے فون میں محفوظ کی جا سکتی ہے۔</p>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="backup-btn" class="save-btn-full" style="background-color:var(--primary-color);">ڈیٹا کا بیک اپ لیں</button>
                     <button id="restore-btn" class="save-btn-full" style="background-color:var(--warning-color);">ڈیٹا بحال کریں</button>
@@ -137,10 +135,17 @@
     </div>
 
     <!-- Modals -->
-    <div id="student-monthly-report-modal" class="modal"><div class="modal-content"><span class="close">×</span><h3 id="student-report-title"></h3><div id="student-report-content" style="max-height: 50vh; overflow-y: auto;"></div><div id="student-report-summary" style="margin-top: 15px; font-weight: bold;"></div>
+    <div id="student-monthly-report-modal" class="modal"><div class="modal-content"><span class="close">×</span>
+        <div class="month-selector">
+            <button id="prev-month-btn" class="small-btn">گزشتہ ماہ</button>
+            <h3 id="student-report-title" style="margin:0;"></h3>
+            <button id="next-month-btn" class="small-btn">اگلا ماہ</button>
+        </div>
+        <div id="student-report-content" style="max-height: 50vh; overflow-y: auto; margin-top:15px;"></div>
+        <div id="student-report-summary" style="margin-top: 15px; font-weight: bold;"></div>
         <div class="share-buttons" style="display: flex; gap: 12px; margin-top: 15px; justify-content: center;">
-            <button id="modal-share-whatsapp" style="background-color: #25D366; color: white; padding: 12px 18px; font-size: 1.1em; border:none; border-radius: 8px; cursor: pointer;">واٹس ایپ</button>
-            <button id="modal-share-pdf" style="background-color: #e74c3c; color: white; padding: 12px 18px; font-size: 1.1em; border:none; border-radius: 8px; cursor: pointer;"><i class="fas fa-file-pdf" style="margin-left: 5px;"></i>PDF</button>
+            <button id="modal-share-whatsapp" class="save-btn-full" style="background-color: #25D366;">واٹس ایپ</button>
+            <button id="modal-share-pdf" class="save-btn-full" style="background-color: #e74c3c;"><i class="fas fa-file-pdf" style="margin-left: 5px;"></i>PDF</button>
         </div>
     </div></div>
     <div id="quantity-assistant-modal" class="modal"><div class="modal-content quantity-assistant"><span class="close">×</span><h2 id="quantity-title">مقدار درج کریں</h2>
@@ -164,19 +169,78 @@
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Service Worker: Registered successfully'))
-            .catch(err => console.log(`Service Worker: Registration Error: ${err}`));
+            .then(reg => console.log('Service Worker: Registered'))
+            .catch(err => console.log(`Service Worker: Error: ${err}`));
     });
 }
 // ==================================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+// *** اسکرپٹ کا مرکزی حصہ ***
+window.addEventListener('DOMContentLoaded', () => {
+    
+    // ==================================================================
+    // *** CAPACITOR PLUGINS کی تیاری (انتہائی محفوظ اور حتمی طریقہ) ***
+    // ==================================================================
+    let Filesystem, Directory, Encoding, Share;
+
+    // محفوظ طریقے سے چیک کریں کہ آیا Capacitor آبجیکٹ موجود ہے یا نہیں۔
+    // '??' آپریٹر اس بات کو یقینی بناتا ہے کہ اگر کوئی چیز null یا undefined ہو تو ڈیفالٹ ویلیو (false) استعمال ہو۔
+    const isNative = window.Capacitor?.isNativePlatform() ?? false;
+
+    // اگر ایپ نیٹو ماحول میں چل رہی ہے، تب ہی پلگ انز کو لوڈ کرنے کی کوشش کریں۔
+    if (isNative) {
+        console.log("Native platform detected. Attempting to load plugins.");
+        try {
+            // Capacitor 3+ (جدید طریقہ)
+            if (window.Capacitor?.Plugins) {
+                const p = window.Capacitor.Plugins;
+                Filesystem = p.Filesystem;
+                Share = p.Share;
+                // جدید کیپیسیٹر میں Directory اور Encoding فائل سسٹم پلگ ان کا حصہ ہیں۔
+                if (Filesystem) {
+                    Directory = Filesystem.Directory;
+                    Encoding = Filesystem.Encoding;
+                }
+            }
+            // Capacitor 2 (پرانا طریقہ) کے لیے فال بیک
+            else if (window.capacitorExports) {
+                console.log("Using legacy capacitorExports.");
+                ({ Filesystem, Directory, Encoding, Share } = window.capacitorExports);
+            }
+            
+            if(!Filesystem || !Share) {
+                console.error("Critical plugins (Filesystem or Share) could not be loaded.");
+            } else {
+                console.log("Plugins loaded successfully.");
+            }
+
+        } catch (e) {
+            console.error("Capacitor plugins could not be loaded:", e);
+        }
+    } else {
+        console.log("Running in a web browser. Native features will be disabled.");
+    }
+    // ==================================================================
+
+
+    async function requestInitialPermissions() {
+        // اجازت صرف تب مانگیں جب ایپ نیٹو ہو اور فائل سسٹم پلگ ان کامیابی سے لوڈ ہوا ہو
+        if (!isNative || !Filesystem) return;
+        try {
+            await Filesystem.requestPermissions();
+            console.log("Filesystem permissions requested.");
+        } catch (e) {
+            console.error('Permission request error:', e);
+        }
+    }
+    
+    // --- باقی تمام ویری ایبلز اور فنکشنز ---
     let currentDate = new Date();
     let attendanceData = { sections: { section1: { students: [], attendance: {} }, section2: { students: [], attendance: {} }, section3: { students: [], attendance: {} } }, studentDetails: {} };
-    const DATA_KEY = 'attendanceData_v20_no_alpha_bar'; // Updated key
+    const DATA_KEY = 'attendanceData_v20_no_alpha_bar';
     let currentModalInfo = {};
+    let reportDate = new Date();
 
-    // --- DOM Elements ---
     const sectionSelector = document.getElementById('section-selector');
     const attendanceTableBody = document.querySelector('#attendance-table tbody');
     const studentListContainer = document.getElementById('student-list');
@@ -184,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchAttendanceInput = document.getElementById('search-attendance');
     const searchStudentListInput = document.getElementById('search-student-list');
 
-    // --- Toast Notification ---
     const showToast = (message) => {
         const toast = document.getElementById('toast-notification');
         toast.textContent = message;
@@ -192,7 +255,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => toast.classList.remove('show'), 3000);
     };
 
-    // --- Data Persistence ---
     const saveData = () => {
         try {
             localStorage.setItem(DATA_KEY, JSON.stringify(attendanceData));
@@ -216,13 +278,11 @@ document.addEventListener('DOMContentLoaded', function() {
         sectionSelector.value = localStorage.getItem('lastSection_v20') || 'section1';
     };
 
-    // --- UI Rendering ---
     const updateDateDisplay = () => {
         document.getElementById('date-picker').valueAsDate = currentDate;
         document.getElementById('current-date').textContent = currentDate.toLocaleDateString('ur-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     };
 
-    // --- CORE SORTING LOGIC ---
     const getSortedStudentMap = (section) => {
         const students = attendanceData.sections[section]?.students || [];
         return students
@@ -233,7 +293,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const renderAttendanceTable = () => {
         const dateStr = currentDate.toISOString().split('T')[0];
         const section = sectionSelector.value;
-        const records = attendanceData.sections[section]?.attendance[dateStr] || [];
+        if (!attendanceData.sections[section] || !attendanceData.sections[section].attendance[dateStr]) {
+            initAppForDate();
+        }
+        const records = attendanceData.sections[section].attendance[dateStr] || [];
         const sortedStudents = getSortedStudentMap(section);
 
         attendanceTableBody.innerHTML = '';
@@ -260,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="lesson" ${record.lesson ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="lessonQuantity">${record.lessonQuantity || 'مقدار'}</span></div></td>
                 <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="homework" ${record.homework ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="homeworkQuantity">${record.homeworkQuantity || 'مقدار'}</span></div></td>
                 <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="milestone" ${record.milestone ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="milestoneQuantity">${record.milestoneQuantity || 'مقدار'}</span></div></td>
-                <td><div class="attendance-cell-content" style="justify-content: center;">${phone ? `<button class="small-btn" data-action="share-whatsapp" data-student-name="${student.name}" data-phone="${phone}" title="ماہانہ رپورٹ بھیجیں" style="background-color: #25D366; color: white;"><i class="fab fa-whatsapp"></i></button>` : ''}</div></td>
+                <td><div class="attendance-cell-content" style="justify-content: center;">${phone ? `<button class="small-btn" data-action="share-whatsapp-daily" data-student-name="${student.name}" data-phone="${phone}" title="آج کی رپورٹ بھیجیں" style="background-color: #25D366; color: white;"><i class="fab fa-whatsapp"></i></button>` : ''}</div></td>
             `;
             attendanceTableBody.appendChild(row);
         });
@@ -392,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    const initApp = () => {
+    const initAppForDate = () => {
         const dateStr = currentDate.toISOString().split('T')[0];
         const section = sectionSelector.value;
         if (!attendanceData.sections[section]) attendanceData.sections[section] = { students: [], attendance: {} };
@@ -403,23 +466,24 @@ document.addEventListener('DOMContentLoaded', function() {
             const existing = attendanceData.sections[section].attendance[dateStr] || [];
             attendanceData.sections[section].attendance[dateStr] = Array(students.length).fill(null).map((_, i) => existing[i] || defaultRec());
         }
-        
+    };
+
+    const initApp = () => {
+        initAppForDate();
         searchAttendanceInput.value = '';
         searchStudentListInput.value = '';
-        
         updateDateDisplay();
         renderAttendanceTable();
         renderStudentList();
         renderStats();
     };
 
-    // --- Modal Handling & Other Functions ---
     const openModal = (modalId) => document.getElementById(modalId).classList.add('active');
     const closeModal = (modalId) => document.getElementById(modalId).classList.remove('active');
     const formatPhoneNumberForWhatsApp = (phone) => { let cleaned = phone.replace(/\D/g, ''); if (cleaned.startsWith('03')) cleaned = '92' + cleaned.substring(1); return cleaned; };
 
-    const generateMonthlyReportText = (studentName, dateForMonth) => {
-        const month = dateForMonth.getMonth(), year = dateForMonth.getFullYear();
+    const generateMonthlyReportText = (studentName, dateForReport) => {
+        const month = dateForReport.getMonth(), year = dateForReport.getFullYear();
         const section = sectionSelector.value;
         const reportTitle = `*${studentName} کی ماہانہ کارکردگی رپورٹ* (${new Date(year, month).toLocaleString('ur-PK', { month: 'long', year: 'numeric' })})`;
         const reportData = generateMonthlyReportFor(studentName, month, year, section);
@@ -464,57 +528,117 @@ document.addEventListener('DOMContentLoaded', function() {
         return report;
     };
     
-    const showStudentMonthlyReportModal = (studentName) => {
-        const month = currentDate.getMonth(), year = currentDate.getFullYear(), section = sectionSelector.value;
-        const reportTitle = `${studentName} کی رپورٹ (${new Date(year, month).toLocaleString('ur-PK', { month: 'long', year: 'numeric' })})`;
+    const renderAndShowStudentReport = (studentName, dateForReport) => {
+        currentModalInfo.reportDate = dateForReport;
+        const month = dateForReport.getMonth(), year = dateForReport.getFullYear();
+        const section = sectionSelector.value;
+        
+        const reportTitle = `${studentName} (${new Date(year, month).toLocaleString('ur-PK', { month: 'long', year: 'numeric' })})`;
         document.getElementById('student-report-title').textContent = reportTitle;
+        
         const reportData = generateMonthlyReportFor(studentName, month, year, section);
         const reportContent = document.getElementById('student-report-content');
         let tableHTML = `<table style="font-size:0.9em;width:100%;"><thead><tr><th>تاریخ</th><th>حاضری</th><th>سبق</th><th>سبقی</th><th>منزل</th></tr></thead><tbody>`;
-        reportData.records.forEach(rec => {
-            tableHTML += `<tr class="${rec.present ? 'present-row' : 'absent-row'}">
-                <td>${new Date(rec.date).toLocaleDateString('ur-PK', {day:'numeric', month:'short'})}</td>
-                <td>${rec.present ? 'حاضر' : 'غیرحاضر'}</td>
-                <td>${rec.present ? (rec.lesson ? (rec.lessonQuantity || '✔') : '✘') : '-'}</td>
-                <td>${rec.present ? (rec.homework ? (rec.homeworkQuantity || '✔') : '✘') : '-'}</td>
-                <td>${rec.present ? (rec.milestone ? (rec.milestoneQuantity || '✔') : '✘') : '-'}</td></tr>`;
-        });
+        if (reportData.records.length > 0) {
+            reportData.records.forEach(rec => {
+                tableHTML += `<tr class="${rec.present ? 'present-row' : 'absent-row'}">
+                    <td>${new Date(rec.date).toLocaleDateString('ur-PK', {day:'numeric', month:'short'})}</td>
+                    <td>${rec.present ? 'حاضر' : 'غیرحاضر'}</td>
+                    <td>${rec.present ? (rec.lesson ? (rec.lessonQuantity || '✔') : '✘') : '-'}</td>
+                    <td>${rec.present ? (rec.homework ? (rec.homeworkQuantity || '✔') : '✘') : '-'}</td>
+                    <td>${rec.present ? (rec.milestone ? (rec.milestoneQuantity || '✔') : '✘') : '-'}</td></tr>`;
+            });
+        } else {
+            tableHTML += `<tr><td colspan="5" style="text-align:center;">اس مہینے کا کوئی ریکارڈ موجود نہیں۔</td></tr>`;
+        }
         reportContent.innerHTML = tableHTML + '</tbody></table>';
+        
         const presentPercent = reportData.totalDays > 0 ? Math.round((reportData.presentDays/reportData.totalDays)*100) : 0;
         document.getElementById('student-report-summary').textContent = `خلاصہ: ${reportData.presentDays}/${reportData.totalDays} دن حاضری (${presentPercent}%)`;
-        document.getElementById('modal-share-whatsapp').onclick = () => {
-            const phone = (attendanceData.studentDetails[studentName] || {}).phone;
-            if (!phone) return showToast('اس طالب علم کا فون نمبر موجود نہیں');
-            const reportText = generateMonthlyReportText(studentName, currentDate);
-            window.open(`https://wa.me/${formatPhoneNumberForWhatsApp(phone)}?text=${encodeURIComponent(reportText)}`, '_blank');
-        };
-        document.getElementById('modal-share-pdf').onclick = () => shareAsUrduPDF(studentName);
+        
         openModal('student-monthly-report-modal');
     };
     
+    const showStudentMonthlyReportModal = (studentName) => {
+        currentModalInfo.studentName = studentName;
+        renderAndShowStudentReport(studentName, new Date());
+    };
+
     const shareAsUrduPDF = async (studentName) => {
+        if (!isNative || !Share || !Filesystem) {
+            alert("یہ فیچر صرف اینڈرائڈ ایپ میں دستیاب ہے۔");
+            return;
+        }
         showToast('PDF بنائی جا رہی ہے...');
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const reportTitleEl = document.getElementById('student-report-title');
-        const reportSummaryEl = document.getElementById('student-report-summary');
-        const reportContentEl = document.getElementById('student-report-content');
-        try {
-            const canvasOptions = { scale: 2, backgroundColor: null, useCORS: true };
-            const canvasTitle = await html2canvas(reportTitleEl, canvasOptions);
-            pdf.addImage(canvasTitle.toDataURL('image/png'), 'PNG', 10, 10, 190, 0);
-            const canvasSummary = await html2canvas(reportSummaryEl, canvasOptions);
-            pdf.addImage(canvasSummary.toDataURL('image/png'), 'PNG', 10, 25, 190, 0);
-            const canvasContent = await html2canvas(reportContentEl, canvasOptions);
-            const imgProps = pdf.getImageProperties(canvasContent);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(canvasContent.toDataURL('image/png'), 'PNG', 10, 40, pdfWidth - 20, pdfHeight);
-            pdf.save(`${studentName}_report.pdf`);
-        } catch (error) { console.error("PDF generation failed:", error); showToast("PDF خرابی: " + error.message); }
-    };
+        const modalContent = document.querySelector('#student-monthly-report-modal .modal-content');
 
-    // --- All Event Listeners ---
+        try {
+            const canvas = await html2canvas(modalContent, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                ignoreElements: (element) => element.classList.contains('share-buttons') || element.classList.contains('close')
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            const pdfData = pdf.output('datauristring').split(',')[1];
+            const dateForReport = currentModalInfo.reportDate || new Date();
+            const fileName = `${studentName}_report_${dateForReport.getFullYear()}_${dateForReport.getMonth()+1}.pdf`;
+            
+            const result = await Filesystem.writeFile({
+                path: fileName,
+                data: pdfData,
+                directory: Directory.Cache,
+            });
+
+            await Share.share({
+                title: `رپورٹ: ${studentName}`,
+                url: result.uri,
+                dialogTitle: 'رپورٹ شیئر کریں'
+            });
+        } catch (error) { 
+            console.error("PDF generation/sharing failed:", error); 
+            showToast("PDF شیئر کرنے میں خرابی۔"); 
+        }
+    };
+    
+    document.getElementById('backup-btn').addEventListener('click', async () => {
+        const dataStr = JSON.stringify(attendanceData, null, 2);
+        const dateSuffix = new Date().toISOString().split('T')[0];
+        const fileName = `hifz_tracker_backup_${dateSuffix}.json`;
+
+        if (isNative && Share && Filesystem && Encoding) {
+            try {
+                const result = await Filesystem.writeFile({
+                    path: fileName,
+                    data: dataStr,
+                    directory: Directory.Cache,
+                    encoding: Encoding.UTF8,
+                });
+                await Share.share({
+                    title: 'حفاظ ٹریکر بیک اپ',
+                    url: result.uri,
+                    dialogTitle: 'بیک اپ شیئر کریں'
+                });
+            } catch (error) { 
+                showToast('بیک اپ شیئر کرنے میں خرابی ہوئی۔'); 
+                console.error(error); 
+            }
+        } else {
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    });
+
     (function setupListeners() {
         document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', function() {
             document.querySelector('.tab.active')?.classList.remove('active');
@@ -525,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
 
         document.getElementById('date-picker').addEventListener('change', (e) => { 
-            currentDate = e.target.valueAsDate || new Date();
+            currentDate = e.target.valueAsDate ? new Date(e.target.valueAsDate.valueOf() + e.target.valueAsDate.getTimezoneOffset() * 60000) : new Date();
             initApp(); 
         });
         sectionSelector.addEventListener('change', () => { 
@@ -538,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         attendanceTableBody.addEventListener('change', (e) => {
             if (e.target.classList.contains('attendance-check')) {
-                const index = e.target.dataset.index, field = e.target.dataset.field;
+                const index = parseInt(e.target.dataset.index), field = e.target.dataset.field;
                 const dateStr = currentDate.toISOString().split('T')[0], section = sectionSelector.value;
                 const record = attendanceData.sections[section].attendance[dateStr][index];
                 record[field] = e.target.checked;
@@ -553,8 +677,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.addEventListener('click', (e) => {
             const target = e.target.closest('[data-action]'); if (!target) return;
             const action = target.dataset.action, indexStr = target.dataset.index, studentName = target.dataset.studentName;
-            const index = parseInt(indexStr); // Ensure index is a number
-            const section = sectionSelector.value, students = attendanceData.sections[section]?.students;
+            const index = parseInt(indexStr);
+            const section = sectionSelector.value;
+            const students = attendanceData.sections[section]?.students;
             
             switch (action) {
                 case 'delete-student':
@@ -579,10 +704,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentModalInfo = { index, field };
                     document.getElementById('quantity-title').textContent = `${students[index]} - ${field.replace('Quantity', '')}`;
                     const currentQuantity = record[field] || '1';
-                    const quantityPreview = document.getElementById('quantity-preview');
-                    const stepperValueEl = document.getElementById('stepper-value');
-                    quantityPreview.value = currentQuantity;
-                    stepperValueEl.textContent = parseInt(currentQuantity) || 1; 
+                    document.getElementById('quantity-preview').value = currentQuantity;
+                    document.getElementById('stepper-value').textContent = parseInt(currentQuantity) || 1; 
                     document.getElementById('para-selector').value = "";
                     openModal('quantity-assistant-modal');
                     break;
@@ -592,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('phone-input').value = (attendanceData.studentDetails[studentName] || {}).phone || '';
                     openModal('phone-modal');
                     break;
-                 case 'share-whatsapp':
+                 case 'share-whatsapp-daily':
                     const phone = target.dataset.phone; if (!phone) return showToast('اس طالب علم کا فون نمبر موجود نہیں');
                     window.open(`https://wa.me/${formatPhoneNumberForWhatsApp(phone)}?text=${encodeURIComponent(generateMonthlyReportText(studentName, currentDate))}`, '_blank');
                     break;
@@ -644,7 +767,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('فون نمبر اپ ڈیٹ ہو گیا۔');
         });
 
-        // --- Quantity Assistant Listeners ---
         const quantityPreview = document.getElementById('quantity-preview');
         const stepperValueEl = document.getElementById('stepper-value');
         const paraSelector = document.getElementById('para-selector');
@@ -670,21 +792,6 @@ document.addEventListener('DOMContentLoaded', function() {
             closeModal('quantity-assistant-modal');
         });
         
-        // --- Backup and Restore Listeners ---
-        document.getElementById('backup-btn').addEventListener('click', () => {
-            try {
-                const dataStr = JSON.stringify(attendanceData, null, 2);
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                const dateSuffix = new Date().toISOString().split('T')[0];
-                a.href = url; a.download = `hifz_tracker_backup_${dateSuffix}.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast("بیک اپ فائل 'Downloads' فولڈر میں محفوظ کر دی گئی ہے۔");
-            } catch (error) { showToast('بیک اپ بنانے میں خرابی ہوئی۔'); console.error(error); }
-        });
-        
         document.getElementById('restore-btn').addEventListener('click', () => restoreFileInput.click());
         restoreFileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
@@ -707,20 +814,39 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onerror = () => { showToast('فائل پڑھنے میں خرابی ہوئی۔'); event.target.value = null; };
             reader.readAsText(file);
         });
+        
+        document.getElementById('modal-share-pdf').addEventListener('click', () => shareAsUrduPDF(currentModalInfo.studentName));
+        document.getElementById('modal-share-whatsapp').addEventListener('click', () => {
+            const phone = (attendanceData.studentDetails[currentModalInfo.studentName] || {}).phone;
+            if (!phone) return showToast('اس طالب علم کا فون نمبر موجود نہیں');
+            const reportText = generateMonthlyReportText(currentModalInfo.studentName, currentModalInfo.reportDate);
+            window.open(`https://wa.me/${formatPhoneNumberForWhatsApp(phone)}?text=${encodeURIComponent(reportText)}`, '_blank');
+        });
 
-        // Close modals
+        document.getElementById('prev-month-btn').addEventListener('click', () => {
+            const newDate = new Date(currentModalInfo.reportDate);
+            newDate.setMonth(newDate.getMonth() - 1);
+            renderAndShowStudentReport(currentModalInfo.studentName, newDate);
+        });
+        document.getElementById('next-month-btn').addEventListener('click', () => {
+            const newDate = new Date(currentModalInfo.reportDate);
+            newDate.setMonth(newDate.getMonth() + 1);
+            renderAndShowStudentReport(currentModalInfo.studentName, newDate);
+        });
+
         document.querySelectorAll('.modal .close').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal').id)));
         document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); }));
     })();
 
-    // Initial setup for Quantity Assistant quick buttons and para selector
     document.getElementById('quick-btns-container').innerHTML = ['لائن', 'صفحہ', 'رکوع', 'آیت', 'ربع', 'آدھا', 'پون', 'سوا', 'مکمل', 'یاد'].map(text => `<button class="quick-btn">${text}</button>`).join('');
     const paraSelector = document.getElementById('para-selector');
     paraSelector.innerHTML = '<option value="">پارہ منتخب کریں</option>';
     for (let i = 1; i <= 30; i++) paraSelector.innerHTML += `<option value="${i}">پارہ نمبر ${i}</option>`;
 
+    // --- ایپ کا آغاز ---
     loadData();
     initApp();
+    requestInitialPermissions();
 });
 </script>
 </body>
