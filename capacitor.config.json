@@ -1,0 +1,6 @@
+{
+  "appId": "com.hifaz.finalapp",
+  "appName": "Hifaz Tracker",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
