@@ -29,6 +29,10 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      # * یہ ہے وہ جادوئی کمانڈ جو غائب تھی *
+      - name: Sync Capacitor project
+        run: npx cap sync android
+
       - name: Build APK
         run: |
           cd android
