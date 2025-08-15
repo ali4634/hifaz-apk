@@ -218,7 +218,7 @@ window.addEventListener('DOMContentLoaded', () => {
             console.error("Capacitor plugins could not be loaded:", e);
         }
     } else {
-        console.log("Running in a web browser. Native features will be disabled.");
+        console.log("Running in a web browser. Native features will be disabled or use web fallbacks.");
     }
     // ==================================================================
 
@@ -564,15 +564,16 @@ window.addEventListener('DOMContentLoaded', () => {
         renderAndShowStudentReport(studentName, new Date());
     };
 
+    // =========================================================================================
+    // *** پی ڈی ایف بنانے کا درست شدہ فنکشن ***
+    // =========================================================================================
     const shareAsUrduPDF = async (studentName) => {
-        if (!isNative || !Share || !Filesystem) {
-            alert("یہ فیچر صرف اینڈرائڈ ایپ میں دستیاب ہے۔");
-            return;
-        }
         showToast('PDF بنائی جا رہی ہے...');
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const modalContent = document.querySelector('#student-monthly-report-modal .modal-content');
+        const dateForReport = currentModalInfo.reportDate || new Date();
+        const fileName = `${studentName}_report_${dateForReport.getFullYear()}_${dateForReport.getMonth()+1}.pdf`;
 
         try {
             const canvas = await html2canvas(modalContent, {
@@ -586,38 +587,49 @@ window.addEventListener('DOMContentLoaded', () => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-            const pdfData = pdf.output('datauristring').split(',')[1];
-            const dateForReport = currentModalInfo.reportDate || new Date();
-            const fileName = `${studentName}_report_${dateForReport.getFullYear()}_${dateForReport.getMonth()+1}.pdf`;
-            
-            const result = await Filesystem.writeFile({
-                path: fileName,
-                data: pdfData,
-                directory: Directory.Cache,
-            });
+            // <-- تبدیلی یہاں سے شروع -->
+            // اب ہم چیک کریں گے کہ ایپ نیٹو ہے یا نہیں
+            if (isNative && Share && Filesystem) {
+                // یہ نیٹو ایپ (APK) کا طریقہ ہے
+                const pdfData = pdf.output('datauristring').split(',')[1];
+                const result = await Filesystem.writeFile({
+                    path: fileName,
+                    data: pdfData,
+                    directory: Directory.Cache,
+                });
+                await Share.share({
+                    title: `رپورٹ: ${studentName}`,
+                    url: result.uri,
+                    dialogTitle: 'رپورٹ شیئر کریں'
+                });
+            } else {
+                // یہ ویب براؤزر کا طریقہ ہے (فائل کو براہ راست ڈاؤن لوڈ کریں)
+                pdf.save(fileName);
+            }
+            // <-- تبدیلی یہاں ختم -->
 
-            await Share.share({
-                title: `رپورٹ: ${studentName}`,
-                url: result.uri,
-                dialogTitle: 'رپورٹ شیئر کریں'
-            });
         } catch (error) { 
             console.error("PDF generation/sharing failed:", error); 
-            showToast("PDF شیئر کرنے میں خرابی۔"); 
+            showToast("PDF بنانے یا شیئر کرنے میں خرابی۔"); 
         }
     };
     
+    // =========================================================================================
+    // *** بیک اپ کا درست شدہ فنکشن ***
+    // =========================================================================================
     document.getElementById('backup-btn').addEventListener('click', async () => {
         const dataStr = JSON.stringify(attendanceData, null, 2);
         const dateSuffix = new Date().toISOString().split('T')[0];
         const fileName = `hifz_tracker_backup_${dateSuffix}.json`;
 
+        // <-- تبدیلی یہاں سے شروع -->
+        // نیٹو ایپ کے لیے شیئر مینیو استعمال کریں
         if (isNative && Share && Filesystem && Encoding) {
             try {
                 const result = await Filesystem.writeFile({
                     path: fileName,
                     data: dataStr,
-                    directory: Directory.Cache,
+                    directory: Directory.Cache, // Cache ڈائرکٹری بہتر ہے
                     encoding: Encoding.UTF8,
                 });
                 await Share.share({
@@ -627,16 +639,27 @@ window.addEventListener('DOMContentLoaded', () => {
                 });
             } catch (error) { 
                 showToast('بیک اپ شیئر کرنے میں خرابی ہوئی۔'); 
-                console.error(error); 
+                console.error("Native backup share error:", error); 
             }
         } else {
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = fileName;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // ویب براؤزر کے لیے فائل براہ راست ڈاؤن لوڈ کریں
+            try {
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; 
+                a.download = fileName;
+                document.body.appendChild(a); 
+                a.click(); 
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('بیک اپ فائل ڈاؤن لوڈ ہو رہی ہے۔');
+            } catch (error) {
+                showToast('بیک اپ ڈاؤن لوڈ کرنے میں خرابی ہوئی۔'); 
+                console.error("Web backup download error:", error); 
+            }
         }
+        // <-- تبدیلی یہاں ختم -->
     });
 
     (function setupListeners() {
@@ -812,7 +835,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 event.target.value = null; 
             };
             reader.onerror = () => { showToast('فائل پڑھنے میں خرابی ہوئی۔'); event.target.value = null; };
-            reader.readAsText(file);
+            reader.readText(file);
         });
         
         document.getElementById('modal-share-pdf').addEventListener('click', () => shareAsUrduPDF(currentModalInfo.studentName));
@@ -851,3 +874,4 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
