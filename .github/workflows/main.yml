@@ -24,19 +24,29 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/filesystem @capacitor/share
+          npm install @capacitor-community/file-picker
       
-      - name: Add Android platform
-        run: npx cap add android
-
-      # * یہ ہے وہ جادوئی کمانڈ جو غائب تھی *
       - name: Sync Capacitor project
-        run: npx cap sync android
+        run: |
+          npx cap sync android
+          npx cap update android
 
-      - name: Build APK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Clean Gradle
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew clean
+
+      - name: Build APK with debug keystore
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
