@@ -24,29 +24,18 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npm install @capacitor/filesystem @capacitor/share
-          npm install @capacitor-community/file-picker
+        run: npm install
       
+      - name: Add Android platform
+        run: npx cap add android
+
       - name: Sync Capacitor project
-        run: |
-          npx cap sync android
-          npx cap update android
+        run: npx cap sync android
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Clean Gradle
+      - name: Build APK
         run: |
           cd android
-          ./gradlew clean
-
-      - name: Build APK with debug keystore
-        run: |
-          cd android
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
