@@ -2,21 +2,5 @@
   "appId": "com.hifaz.finalapp",
   "appName": "Hifaz Tracker",
   "webDir": "www",
-  "bundledWebRuntime": false,
-  "plugins": {
-    "Filesystem": {
-      "androidPermissions": [
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_MEDIA_LOCATION"
-      ]
-    },
-    "Share": {},
-    "Permissions": {
-      "permissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
-      ]
-    }
-  }
+  "bundledWebRuntime": false
 }
