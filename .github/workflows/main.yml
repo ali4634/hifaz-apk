@@ -1,44 +1,58 @@
-  - name: Setup Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: '20'
+name: Build Android APK
 
-  - name: Setup Java
-    uses: actions/setup-java@v4
-    with:
-      distribution: 'zulu'
-      java-version: '17'
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
-  - name: Install dependencies
-    run: |
-      npm install
-      npm install @capacitor/core @capacitor/cli @capacitor/android
-      npm install @capacitor/filesystem @capacitor/share
-      npm install @capacitor-community/file-picker
-  
-  # Capacitor plugins کو مکمل طور پر sync کریں
-  - name: Sync Capacitor project
-    run: |
-      npx cap sync android
-      npx cap update android
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # Android SDK اور build tools کی ضروری ورژنز یقینی بنائیں
-  - name: Setup Android SDK
-    uses: android-actions/setup-android@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-  # APK build سے پہلے Gradle cache صاف کریں
-  - name: Clean Gradle
-    run: |
-      cd android
-      ./gradlew clean
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-  - name: Build APK with debug keystore
-    run: |
-      cd android
-      ./gradlew assembleDebug --stacktrace
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npm install @capacitor/filesystem @capacitor/share
+          npm install @capacitor-community/file-picker
+      
+      # Capacitor plugins کو مکمل طور پر sync کریں
+      - name: Sync Capacitor project
+        run: |
+          npx cap sync android
+          npx cap update android
 
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: hifaz-tracker-apk
-      path: android/app/build/outputs/apk/debug/app-debug.apk
+      # Android SDK اور build tools کی ضروری ورژنز یقینی بنائیں
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # APK build سے پہلے Gradle cache صاف کریں
+      - name: Clean Gradle
+        run: |
+          cd android
+          ./gradlew clean
+
+      - name: Build APK with debug keystore
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hifaz-tracker-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
