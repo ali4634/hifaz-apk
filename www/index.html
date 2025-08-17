@@ -564,9 +564,6 @@ window.addEventListener('DOMContentLoaded', () => {
         renderAndShowStudentReport(studentName, new Date());
     };
 
-    // =========================================================================================
-    // *** پی ڈی ایف بنانے کا درست شدہ فنکشن ***
-    // =========================================================================================
     const shareAsUrduPDF = async (studentName) => {
         showToast('PDF بنائی جا رہی ہے...');
         const { jsPDF } = window.jspdf;
@@ -587,10 +584,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-            // <-- تبدیلی یہاں سے شروع -->
-            // اب ہم چیک کریں گے کہ ایپ نیٹو ہے یا نہیں
             if (isNative && Share && Filesystem) {
-                // یہ نیٹو ایپ (APK) کا طریقہ ہے
                 const pdfData = pdf.output('datauristring').split(',')[1];
                 const result = await Filesystem.writeFile({
                     path: fileName,
@@ -603,10 +597,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     dialogTitle: 'رپورٹ شیئر کریں'
                 });
             } else {
-                // یہ ویب براؤزر کا طریقہ ہے (فائل کو براہ راست ڈاؤن لوڈ کریں)
                 pdf.save(fileName);
             }
-            // <-- تبدیلی یہاں ختم -->
 
         } catch (error) { 
             console.error("PDF generation/sharing failed:", error); 
@@ -615,34 +607,37 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     
     // =========================================================================================
-    // *** بیک اپ کا درست شدہ فنکشن ***
+    // *** بیک اپ کا درست شدہ اور مکمل فنکشن ***
     // =========================================================================================
     document.getElementById('backup-btn').addEventListener('click', async () => {
         const dataStr = JSON.stringify(attendanceData, null, 2);
         const dateSuffix = new Date().toISOString().split('T')[0];
         const fileName = `hifz_tracker_backup_${dateSuffix}.json`;
 
-        // <-- تبدیلی یہاں سے شروع -->
-        // نیٹو ایپ کے لیے شیئر مینیو استعمال کریں
-        if (isNative && Share && Filesystem && Encoding) {
+        // نیٹو ایپ (اینڈرائیڈ) کے لیے شیئر مینیو استعمال کریں
+        if (isNative && Filesystem && Share && Encoding) {
             try {
+                // فائل کو عارضی ڈائرکٹری میں محفوظ کریں
                 const result = await Filesystem.writeFile({
                     path: fileName,
                     data: dataStr,
-                    directory: Directory.Cache, // Cache ڈائرکٹری بہتر ہے
+                    directory: Directory.Cache, // <-- اہم تبدیلی
                     encoding: Encoding.UTF8,
                 });
+
+                // شیئر مینیو کھولیں
                 await Share.share({
-                    title: 'حفاظ ٹریکر بیک اپ',
+                    title: 'حفظ ٹریکر بیک اپ',
+                    text: 'یہاں آپ کی بیک اپ فائل ہے۔',
                     url: result.uri,
-                    dialogTitle: 'بیک اپ شیئر کریں'
+                    dialogTitle: 'بیک اپ فائل شیئر کریں'
                 });
             } catch (error) { 
                 showToast('بیک اپ شیئر کرنے میں خرابی ہوئی۔'); 
                 console.error("Native backup share error:", error); 
             }
         } else {
-            // ویب براؤزر کے لیے فائل براہ راست ڈاؤن لوڈ کریں
+            // ویب براؤزر کے لیے فائل براہ راست ڈاؤن لوڈ کریں (یہ پہلے ہی ٹھیک تھا)
             try {
                 const blob = new Blob([dataStr], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -659,7 +654,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 console.error("Web backup download error:", error); 
             }
         }
-        // <-- تبدیلی یہاں ختم -->
     });
 
     (function setupListeners() {
@@ -874,4 +868,3 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
