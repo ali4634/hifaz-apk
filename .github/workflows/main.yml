@@ -26,14 +26,14 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
-      # 4. Tamam packages install karna (Iske baad capacitor.js mojood hoga)
+      # 4. Tamam packages install karna
       - name: Install dependencies
         run: npm install
 
-      # 5. YEH HAI JADUI AUR HATTMI HAL
-      # capacitor.js ko seedha uski factory (node_modules) se www folder mein copy karna
-      - name: Copy capacitor.js from node_modules to web dir
-        run: cp node_modules/@capacitor/android/capacitor.js www/capacitor.js
+      # 5. YEH HAI HATTMI AUR 100% KAMYAB HAL
+      # Capacitor ko hukm dena ke woh capacitor.js ko seedha www folder mein banaye
+      - name: Copy web assets and generate capacitor.js in www folder
+        run: npx cap copy
 
       # 6. Android platform ko add karna
       - name: Add Android platform
