@@ -17,32 +17,29 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Setup Java (Zulu is a good choice)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
       
-      # Step 1: Install dependencies using npm ci for reliability
       - name: Install dependencies
         run: npm install
 
-      # Step 2: Add Android platform if it doesn't exist
-      # Note: This command is idempotent and safe to run every time
       - name: Add Android platform
         run: npx cap add android
 
-      # Step 3: Sync ALL plugins and dependencies (THIS IS THE FIX!)
-      # The command is just 'npx cap sync', not 'npx cap sync android'
-      - name: Sync Capacitor project
+      - name: Sync Capacitor project (This creates capacitor.js)
         run: npx cap sync
 
-      # Step 4: Build the debug APK
+      # Yeh woh JADUI qadam hai jo sab kuch theek kar dega
+      - name: Copy capacitor.js to web asset directory
+        run: cp capacitor.js www/capacitor.js
+      
       - name: Build APK
-        working-directory: android  # Use working-directory for cleaner steps
+        working-directory: android
         run: ./gradlew assembleDebug
 
-      # Step 5: Upload the finished APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
