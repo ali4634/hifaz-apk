@@ -13,35 +13,53 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- *** Capacitor.js (سب سے اہم) *** -->
-    <script src="capacitor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
             --primary-color: #3498db; --secondary-color: #2980b9; --success-color: #27ae60;
             --danger-color: #e74c3c; --warning-color: #f39c12; --light-color: #ecf0f1;
             --dark-color: #2c3e50; --absent-color: #ffecec; --present-color: #e8f5e9;
-            --inactive-color: #fff3e0;
             --border-radius: 8px; --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         body {
-            font-family: 'Noto Nastaliq Urdu', 'Segoe UI', Tahoma, sans-serif;
-            margin: 0; padding: 10px;
+            font-family: 'Noto Nastaliq Urdu', 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 10px;
             background-color: #f5f7fa; direction: rtl; font-size: 15px; color: #333;
-            line-height: 1.6; overscroll-behavior-y: contain;
+            line-height: 1.6; overscroll-behavior-y: contain; transition: background-color 0.3s, color 0.3s;
         }
-        .container { max-width: 100%; margin: 0 auto; background-color: white; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
-        h1, h2, h3, h4, h5 { color: var(--dark-color); font-weight: 700; }
+        /* --- ڈارک تھیم --- */
+        body.dark-theme { background-color: #121212; color: #e0e0e0; }
+        .dark-theme .container, .dark-theme .modal-content, .dark-theme .management-section, .dark-theme .student-progress-container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); border-color: #444; }
+        .dark-theme h1, .dark-theme h2, .dark-theme h3, .dark-theme h4, .dark-theme h5 { color: #f5f5f5; }
+        .dark-theme h1, .dark-theme .modal-content h2 { border-bottom-color: #444; }
+        .dark-theme .tab { background-color: #333; color: #f1f1f1; border-color: #444; }
+        .dark-theme .tab.active { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
+        .dark-theme .tab-content, .dark-theme #student-list div { border-color: #444; }
+        .dark-theme th { background-color: var(--dark-color); }
+        .dark-theme td, .dark-theme th { border-bottom-color: #444 !important; }
+        .dark-theme tr.present-row { background-color: #2a3b2a; }
+        .dark-theme tr.absent-row { background-color: #4a2c2c; }
+        .dark-theme .input-group input, .dark-theme .input-group select, .dark-theme .section-selector { background-color: #333; color: #f1f1f1; border-color: #555; }
+        .dark-theme .quantity-info { background-color: #333; color: #ccc; border-color: #555; }
+        .dark-theme .close { color: #888; }
+        .dark-theme .quick-btn { background-color: #444; color: #f1f1f1; border-color: #666; }
+        .dark-theme .quick-btn:hover { background-color: var(--primary-color); }
+        .dark-theme #reminder-message { background-color: #2c3e50; border-right-color: var(--warning-color); }
+        .dark-theme #reminder-message h5 { border-bottom-color: #555; }
+        .dark-theme .small-btn { background-color: #555; }
+        .dark-theme .progress-bar-background { background-color: #555; }
+
+        /* تھیم ٹوگل بٹن */
+        #theme-toggle { position: absolute; top: 15px; left: 15px; background: none; border: 1px solid #ccc; color: #888; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2em; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .dark-theme #theme-toggle { border-color: #555; color: #f1f1f1; }
+        .container { position:relative; max-width: 100%; margin: 0 auto; background-color: white; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
         h1 { text-align: center; margin-bottom: 15px; font-size: 1.5em; padding-bottom: 10px; border-bottom: 2px solid var(--primary-color); }
         .tabs { display: flex; margin-bottom: 12px; border-bottom: 1px solid #e0e0e0; gap: 5px; overflow-x: auto; padding-bottom: 5px; }
         .tab { padding: 8px 14px; cursor: pointer; background-color: #f1f1f1; border-radius: var(--border-radius) var(--border-radius) 0 0; font-size: 0.9em; border: 1px solid #e0e0e0; border-bottom: none; white-space: nowrap; }
         .tab.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
         .tab-content { display: none; padding: 12px; border: 1px solid #e0e0e0; border-top: none; }
         .tab-content.active { display: block; }
-        .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 12px; background-color: var(--primary-color); color: white; border-radius: var(--border-radius); gap: 10px; }
-        .date-header h2 { margin: 0; font-size: 1em; }
-        .date-selector { display: flex; align-items: center; gap: 8px; }
+        .date-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 4px 12px; background-color: var(--primary-color); color: white; border-radius: var(--border-radius); gap: 10px; font-size: 0.9em; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.85em; }
         th, td { padding: 8px 10px; border-bottom: 1px solid #e0e0e0; vertical-align: middle; }
         #attendance-table th, #attendance-table td { text-align: center; }
@@ -49,38 +67,60 @@
         th { background-color: var(--primary-color); color: white; font-weight: normal; position: sticky; top: 0; z-index: 1; }
         tr.present-row { background-color: var(--present-color); }
         tr.absent-row { background-color: var(--absent-color); }
-        .attendance-check { transform: scale(1.4); cursor: pointer; accent-color: var(--success-color); }
-        .attendance-cell-content { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 50px; }
-        .quantity-info { font-size: 0.8em; color: #555; cursor: pointer; margin-top: 6px; padding: 2px 6px; line-height: 1.3; min-height: 1.3em; min-width: 45px; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
-        .small-btn { padding: 5px 8px; margin: 2px; font-size: 0.8em; border: none; border-radius: var(--border-radius); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; background-color: var(--secondary-color); color:white; }
+        .attendance-cell-content { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50px; gap: 4px; }
+        .quantity-info { font-size: 0.9em; font-weight: bold; color: #555; cursor: pointer; padding: 2px 8px; line-height: 1.3; min-height: 1.3em; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; text-align: center; }
         .modal { display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
         .modal.active { display: flex; }
-        .modal-content { background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: var(--border-radius); animation: fadeIn 0.3s; }
+        .modal-content { background-color: #fefefe; margin: auto; padding: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: var(--border-radius); box-shadow: 0 5px 20px rgba(0,0,0,0.2); animation: fadeIn 0.3s; }
+        .modal-content h2 { padding-bottom: 10px; border-bottom: 1px solid #eee; margin-top: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         .close { color: #aaa; float: left; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; }
         .input-group { margin-bottom: 10px; }
         .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 8px; border-radius: var(--border-radius); border: 1px solid #ddd; font-family: inherit; font-size: 1em; box-sizing: border-box; }
-        .phone-number { font-size: 0.85em; color: #555; display: block; }
-        .phone-number i { cursor: pointer; font-size: 1.1em; margin: 0 4px; color: var(--secondary-color); }
-        .student-name-clickable { color: var(--secondary-color); font-weight: bold; cursor: pointer; font-size: 1.2em; }
+        .student-name-container { display:flex; align-items: center; gap: 8px; }
+        .student-name { font-size: 1.2em; font-weight: bold; cursor: pointer; color: var(--secondary-color); }
         #toast-notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--dark-color); color: white; padding: 12px 20px; border-radius: var(--border-radius); z-index: 2000; visibility: hidden; opacity: 0; transition: opacity 0.5s, visibility 0.5s; }
         #toast-notification.show { visibility: visible; opacity: 1; }
-        .quantity-assistant .preview { width: 100%; padding: 10px; margin-bottom: 10px; font-size: 1.2em; text-align: center; border: 1px solid #ccc; border-radius: var(--border-radius); box-sizing: border-box; font-family: inherit; direction: rtl; }
-        .quantity-assistant .stepper { display: flex; justify-content: center; align-items: center; margin-bottom: 15px; }
-        .quantity-assistant .stepper-btn { font-size: 2em; padding: 0 20px; cursor: pointer; user-select: none; color: var(--primary-color); }
-        .quantity-assistant .stepper-value { font-size: 2em; min-width: 60px; text-align: center; }
-        .quantity-assistant .quick-btns { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
-        .quantity-assistant .quick-btn { padding: 10px 5px; font-size: 0.9em; border: 1px solid var(--primary-color); background-color: white; color: var(--primary-color); border-radius: var(--border-radius); cursor: pointer; }
-        .quantity-assistant .quick-btn:hover { background-color: #f0f8ff; }
-        .para-selector-container { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
-        .para-selector-container select { flex-grow: 1; padding: 8px; font-size: 1em; border-radius: var(--border-radius); }
         .save-btn-full { width: 100%; padding: 12px; font-size: 1.1em; margin-top: 15px; background-color: var(--success-color); color: white; border: none; border-radius: var(--border-radius); cursor: pointer;}
         .management-section { margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: var(--border-radius); border: 1px solid #ddd; }
+        .small-btn { padding: 5px 8px; margin: 2px; font-size: 0.8em; border: none; border-radius: var(--border-radius); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; background-color: var(--secondary-color); color:white; }
+        .attendance-check { transform: scale(1.5); cursor: pointer; }
+        .dark-theme .attendance-check { accent-color: var(--primary-color); }
+        .watchlist-star { color: #ccc; cursor: pointer; font-size: 1.2em; transition: color 0.3s; vertical-align: middle; }
+        .watchlist-star.active { color: var(--warning-color); }
+        .attendance-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
+        .watchlist-toggle-container { display: flex; align-items: center; gap: 5px; }
+        #quantity-quick-btns { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .quick-btn { background-color: #f1f1f1; padding: 10px; border: 1px solid #e0e0e0; border-radius: var(--border-radius); cursor: pointer; user-select: none; text-align: center; transition: background-color 0.2s; }
+        .quick-btn:hover { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        #reminder-message { padding: 10px; margin-bottom: 15px; background-color: #fff3e0; border-right: 4px solid var(--warning-color); font-size: 0.9em; border-radius: var(--border-radius); }
+        .warning-icon { margin-left: 4px; animation: blink 1.5s infinite; }
+        .warning-icon.fa-exclamation-triangle { color: var(--warning-color); }
+        .warning-icon.fa-redo { color: var(--danger-color); }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        .radio-group { display: flex; gap: 15px; }
+        .radio-group label { display: flex; align-items: center; gap: 5px; }
         .month-selector { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .share-buttons { display: flex; gap: 12px; margin-top: 15px; justify-content: center; }
+        
+        .weekly-dots-graph { display: flex; gap: 3px; justify-content: center; direction: ltr; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #e0e0e0; }
+        .status-dot.blue { background-color: var(--primary-color); }
+        .status-dot.red { background-color: var(--danger-color); }
+        .status-dot.grey { background-color: #bdc3c7; }
+
+        .student-progress-container { margin-bottom: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: var(--border-radius); }
+        .progress-bar-background { width: 100%; background-color: #ecf0f1; border-radius: 10px; overflow: hidden; height: 20px; border: 1px solid #bdc3c7; }
+        .progress-bar-fill { height: 100%; width: 0%; background: repeating-linear-gradient(45deg, var(--primary-color), var(--primary-color) 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); transition: width 0.5s ease-in-out; text-align: left; color: white; font-size: 0.8em; line-height: 20px; padding-left: 8px; direction: ltr; box-sizing: border-box;}
+        .student-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; font-size: 0.9em; }
+        .student-progress-name { font-weight: bold; }
+        .management-section .student-reason { font-size: 0.9em; opacity: 0.8; }
     </style>
 </head>
 <body>
     <div class="container">
+        <button id="theme-toggle"><i class="fas fa-moon"></i></button>
         <h1>📖 مفصل حاضری و سبق رجسٹر</h1>
         <select class="section-selector" id="section-selector" style="font-size: 1.1em; padding: 8px; width:100%; margin-bottom: 10px; border-radius: var(--border-radius);">
             <option value="section1">سیکشن 1</option><option value="section2">سیکشن 2</option><option value="section3">سیکشن 3</option>
@@ -88,782 +128,580 @@
         <div class="tabs">
             <div class="tab active" data-tab="attendance">حاضری</div>
             <div class="tab" data-tab="stats">اعداد و شمار</div>
+            <div class="tab" data-tab="performance">طلباء کارکردگی</div>
             <div class="tab" data-tab="students">طلباء مینجمنٹ</div>
         </div>
         <div class="tab-content active" id="attendance-tab">
             <div class="date-header">
-                <div class="date-selector">
-                    <input type="date" id="date-picker">
-                </div>
+                <div class="date-selector"><input type="date" id="date-picker"></div>
                 <h2 id="current-date"></h2>
             </div>
-            <div class="input-group" style="margin-top: 15px;">
-                <input type="search" id="search-attendance" placeholder="طالب علم تلاش کریں..." class="input-group input" style="width:100%; font-size: 1em;">
+            <div class="attendance-controls">
+                <div class="input-group" style="flex-grow:1; margin-bottom:0;"><input type="search" id="search-attendance" placeholder="طالب علم تلاش کریں..." class="input-group input"></div>
+                <div class="watchlist-toggle-container"><label for="watchlist-toggle" style="font-size:0.9em;">نگران کردہ</label><input type="checkbox" id="watchlist-toggle" class="attendance-check"></div>
             </div>
-            <div style="overflow-x: auto;"><table id="attendance-table"><thead><tr><th>نام</th><th>حاضری</th><th>سبق</th><th>سبقی</th><th>منزل</th><th>کاروائی</th></tr></thead><tbody></tbody></table></div>
+            <div style="overflow-x: auto;"><table id="attendance-table"><thead><tr><th>نام</th><th>حاضری</th><th>سبق</th><th>سبقی</th><th>منزل</th><th>ہفتہ وار کارکردگی</th></tr></thead><tbody></tbody></table></div>
         </div>
         <div class="tab-content" id="stats-tab">
-             <h2>اعداد و شمار</h2>
-             <div class="stats-container" id="stats-container"></div>
+            <h2>روزانہ کی رپورٹ</h2>
+            <div id="daily-stats-container"></div>
+        </div>
+        <div class="tab-content" id="performance-tab">
+            <h2>طلباء کی مجموعی کارکردگی</h2>
+            <div class="input-group">
+                <label for="performance-type-selector">کارکردگی کی قسم منتخب کریں:</label>
+                <select id="performance-type-selector" class="section-selector">
+                    <option value="milestone">منزل</option>
+                    <option value="homework">سبقی</option>
+                </select>
+            </div>
+            <div id="performance-graphs-container"></div>
         </div>
         <div class="tab-content" id="students-tab">
             <h2>طلباء کی انتظامیہ</h2>
-            <div class="management-section">
-                <h3>نئے طالب علم کا اضافہ</h3>
-                <div class="input-group"><input type="text" id="new-student-name" placeholder="طالب علم کا نام"></div>
-                <div class="input-group"><input type="tel" id="new-student-phone" placeholder="فون نمبر (اختیاری)"></div>
-                <button id="add-student-btn" class="save-btn-full">طالب علم شامل کریں</button>
-            </div>
-             <div class="management-section">
-                <h3 style="margin-top: 20px;">موجودہ طلباء کی فہرست</h3>
-                 <div class="input-group">
-                    <input type="search" id="search-student-list" placeholder="فہرست میں تلاش کریں..." class="input-group input" style="width:100%; font-size: 1em; margin-bottom: 5px;">
-                </div>
-                <div id="student-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 5px;"></div>
-            </div>
+            <div id="student-list-management"></div>
             <div class="management-section">
                 <h3>بیک اپ اور بحالی</h3>
-                <p style="font-size:0.9em; color:#555;">اپنے تمام ڈیٹا کا بیک اپ ڈاؤن لوڈ کریں یا پہلے سے محفوظ شدہ بیک اپ کو بحال کریں۔</p>
-                <p style="font-size:0.8em; color:var(--danger-color); margin-top:-5px; margin-bottom:10px;"><b>نوٹ:</b> بیک اپ فائل شیئر مینیو کے ذریعے فون میں محفوظ کی جا سکتی ہے۔</p>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button id="backup-btn" class="save-btn-full" style="background-color:var(--primary-color);">ڈیٹا کا بیک اپ لیں</button>
-                    <button id="restore-btn" class="save-btn-full" style="background-color:var(--warning-color);">ڈیٹا بحال کریں</button>
-                    <input type="file" id="restore-file-input" accept=".json" style="display:none;">
-                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;"><button data-action="backup" class="save-btn-full" style="background-color:var(--primary-color);">ڈیٹا کا بیک اپ لیں</button><button data-action="restore" class="save-btn-full" style="background-color:var(--warning-color);">ڈیٹا بحال کریں</button><input type="file" id="restore-file-input" accept=".json" style="display:none;"></div>
+            </div>
+            <div class="management-section">
+                <h3>ایپ سیٹنگز</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;"><label for="wake-lock-toggle">اسکرین کو ہمیشہ آن رکھیں</label><input type="checkbox" id="wake-lock-toggle" class="attendance-check"></div>
             </div>
         </div>
     </div>
 
     <!-- Modals -->
-    <div id="student-monthly-report-modal" class="modal"><div class="modal-content"><span class="close">×</span>
-        <div class="month-selector">
-            <button id="prev-month-btn" class="small-btn">گزشتہ ماہ</button>
-            <h3 id="student-report-title" style="margin:0;"></h3>
-            <button id="next-month-btn" class="small-btn">اگلا ماہ</button>
+    <div id="quantity-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-action="close-modal">×</span>
+            <h2 id="quantity-title">مقدار درج کریں</h2>
+            <div id="reminder-message" style="display:none;"></div>
+            <div id="quantity-module-content"></div>
+            <button data-action="save-quantity" class="save-btn-full">محفوظ کریں</button>
         </div>
-        <div id="student-report-content" style="max-height: 50vh; overflow-y: auto; margin-top:15px;"></div>
-        <div id="student-report-summary" style="margin-top: 15px; font-weight: bold;"></div>
-        <div class="share-buttons" style="display: flex; gap: 12px; margin-top: 15px; justify-content: center;">
-            <button id="modal-share-whatsapp" class="save-btn-full" style="background-color: #25D366;">واٹس ایپ</button>
-            <button id="modal-share-pdf" class="save-btn-full" style="background-color: #e74c3c;"><i class="fas fa-file-pdf" style="margin-left: 5px;"></i>PDF</button>
+    </div>
+    
+    <div id="student-details-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-action="close-modal">×</span>
+            <h2 id="student-modal-title">طالب علم کی تفصیلات</h2>
+            <div class="input-group"><label>نام:</label><input type="text" id="student-form-name"></div>
+            <div class="input-group"><label>فون نمبر (مثال: 923123456789):</label><input type="tel" id="student-form-phone" placeholder="923123456789"></div><hr>
+            <h4>منزل کا ہدف</h4>
+            <div class="input-row"><div class="input-group" style="flex:1;"><label>ابتدائی پارہ:</label><input type="number" id="student-form-milestone-start" min="1" max="30"></div><div class="input-group" style="flex:1;"><label>آخری پارہ:</label><input type="number" id="student-form-milestone-end" min="1" max="30"></div></div>
+            <div class="input-group radio-group"><label><input type="radio" name="milestoneOrder" value="straight" checked> سیدھی ترتیب</label><label><input type="radio" name="milestoneOrder" value="reverse"> الٹی ترتیب</label></div><hr>
+            <h4>سبقی کا ہدف</h4>
+            <div class="input-row"><div class="input-group" style="flex:1;"><label>پارہ نمبر:</label><input type="number" id="student-form-homework-para" min="1" max="30"></div><div class="input-group" style="flex:1;"><label>کل صفحات/آیات:</label><input type="number" id="student-form-homework-total" min="1"></div></div>
+            <button data-action="save-student-details" class="save-btn-full">تفصیلات محفوظ کریں</button>
         </div>
-    </div></div>
-    <div id="quantity-assistant-modal" class="modal"><div class="modal-content quantity-assistant"><span class="close">×</span><h2 id="quantity-title">مقدار درج کریں</h2>
-        <input type="text" id="quantity-preview" class="preview">
-        <div class="stepper"><span class="stepper-btn" id="stepper-minus">-</span><span id="stepper-value" class="stepper-value">1</span><span class="stepper-btn" id="stepper-plus">+</span></div>
-        <div class="quick-btns" id="quick-btns-container"></div>
-        <div class="para-selector-container"><label for="para-selector">پارہ نمبر:</label><select id="para-selector"></select></div>
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button id="save-quantity-assistant" class="save-btn-full">محفوظ کریں</button>
-            <button id="clear-quantity-btn" class="save-btn-full" style="background-color: var(--warning-color);">مٹائیں</button>
+    </div>
+    
+    <div id="student-report-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" data-action="close-modal">×</span>
+            <div class="month-selector"><button id="prev-month-btn" class="small-btn" data-action="prev-month">گزشتہ ماہ</button><h3 id="student-report-title" style="margin:0;"></h3><button id="next-month-btn" class="small-btn" data-action="next-month">اگلا ماہ</button></div>
+            <div id="student-report-content" style="max-height: 50vh; overflow-y: auto; margin-top:15px;"></div>
+            <div class="share-buttons"><button data-action="share-whatsapp" class="save-btn-full" style="background-color: #25D366;">رپورٹ شیئر کریں</button><button data-action="share-pdf" class="save-btn-full" style="background-color: #e74c3c;">PDF بنائیں</button></div>
         </div>
-    </div></div>
-    <div id="phone-modal" class="modal"><div class="modal-content"><span class="close">×</span><h2>فون نمبر میں ترمیم</h2><input type="tel" id="phone-input" class="input-group"><button id="save-phone" class="save-btn-full">محفوظ کریں</button></div></div>
-    <div id="name-modal" class="modal"><div class="modal-content"><span class="close">×</span><h2>نام میں ترمیم</h2><input type="text" id="name-input" class="input-group"><button id="save-name" class="save-btn-full">محفوظ کریں</button></div></div>
+    </div>
+    
     <div id="toast-notification"></div>
 
 <script>
-// ==================================================================
-// سروس ورکر کو رجسٹر کرنے کا کوڈ
-// ==================================================================
+'use strict';
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Service Worker: Registered'))
-            .catch(err => console.log(`Service Worker: Error: ${err}`));
+        navigator.serviceWorker.register('./service-worker.js').catch(err => console.log(`SW Error: ${err}`));
     });
 }
-// ==================================================================
 
-// *** اسکرپٹ کا مرکزی حصہ ***
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     
-    // ==================================================================
-    // *** CAPACITOR PLUGINS کی تیاری (انتہائی محفوظ اور حتمی طریقہ) ***
-    // ==================================================================
-    let Filesystem, Directory, Encoding, Share;
-
-    // محفوظ طریقے سے چیک کریں کہ آیا Capacitor آبجیکٹ موجود ہے یا نہیں۔
-    // '??' آپریٹر اس بات کو یقینی بناتا ہے کہ اگر کوئی چیز null یا undefined ہو تو ڈیفالٹ ویلیو (false) استعمال ہو۔
-    const isNative = window.Capacitor?.isNativePlatform() ?? false;
-
-    // اگر ایپ نیٹو ماحول میں چل رہی ہے، تب ہی پلگ انز کو لوڈ کرنے کی کوشش کریں۔
-    if (isNative) {
-        console.log("Native platform detected. Attempting to load plugins.");
-        try {
-            // Capacitor 3+ (جدید طریقہ)
-            if (window.Capacitor?.Plugins) {
-                const p = window.Capacitor.Plugins;
-                Filesystem = p.Filesystem;
-                Share = p.Share;
-                // جدید کیپیسیٹر میں Directory اور Encoding فائل سسٹم پلگ ان کا حصہ ہیں۔
-                if (Filesystem) {
-                    Directory = Filesystem.Directory;
-                    Encoding = Filesystem.Encoding;
-                }
-            }
-            // Capacitor 2 (پرانا طریقہ) کے لیے فال بیک
-            else if (window.capacitorExports) {
-                console.log("Using legacy capacitorExports.");
-                ({ Filesystem, Directory, Encoding, Share } = window.capacitorExports);
-            }
-            
-            if(!Filesystem || !Share) {
-                console.error("Critical plugins (Filesystem or Share) could not be loaded.");
-            } else {
-                console.log("Plugins loaded successfully.");
-            }
-
-        } catch (e) {
-            console.error("Capacitor plugins could not be loaded:", e);
-        }
-    } else {
-        console.log("Running in a web browser. Native features will be disabled or use web fallbacks.");
-    }
-    // ==================================================================
-
-
-    async function requestInitialPermissions() {
-        // اجازت صرف تب مانگیں جب ایپ نیٹو ہو اور فائل سسٹم پلگ ان کامیابی سے لوڈ ہوا ہو
-        if (!isNative || !Filesystem) return;
-        try {
-            await Filesystem.requestPermissions();
-            console.log("Filesystem permissions requested.");
-        } catch (e) {
-            console.error('Permission request error:', e);
-        }
-    }
-    
-    // --- باقی تمام ویری ایبلز اور فنکشنز ---
     let currentDate = new Date();
-    let attendanceData = { sections: { section1: { students: [], attendance: {} }, section2: { students: [], attendance: {} }, section3: { students: [], attendance: {} } }, studentDetails: {} };
-    const DATA_KEY = 'attendanceData_v20_no_alpha_bar';
+    let attendanceData = {};
+    const DATA_KEY = 'attendanceData_v42_negligence';
     let currentModalInfo = {};
-    let reportDate = new Date();
-
+    let wakeLock = null;
+    
+    const themeToggle = document.getElementById('theme-toggle');
     const sectionSelector = document.getElementById('section-selector');
     const attendanceTableBody = document.querySelector('#attendance-table tbody');
-    const studentListContainer = document.getElementById('student-list');
-    const restoreFileInput = document.getElementById('restore-file-input');
-    const searchAttendanceInput = document.getElementById('search-attendance');
-    const searchStudentListInput = document.getElementById('search-student-list');
-
-    const showToast = (message) => {
-        const toast = document.getElementById('toast-notification');
-        toast.textContent = message;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
-    };
-
-    const saveData = () => {
-        try {
-            localStorage.setItem(DATA_KEY, JSON.stringify(attendanceData));
-        } catch (e) { console.error('Data save error:', e); showToast('ڈیٹا محفوظ کرنے میں خرابی'); }
-    };
+    
+    const showToast = (message) => { const t = document.getElementById('toast-notification'); t.textContent = message; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); };
+    const applyTheme = (theme) => { document.body.classList.toggle('dark-theme', theme === 'dark'); themeToggle.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>'; };
+    const saveData = () => { try { localStorage.setItem(DATA_KEY, JSON.stringify(attendanceData)); } catch (e) { showToast('ڈیٹا محفوظ کرنے میں خرابی'); } };
     
     const loadData = () => {
-        const savedData = localStorage.getItem(DATA_KEY);
-        if (savedData) {
-            try {
-                const parsedData = JSON.parse(savedData);
-                if (parsedData && parsedData.sections) {
-                    attendanceData = parsedData;
-                } else { throw new Error("Invalid data format"); }
-            } catch { 
-                console.error("Failed to parse data from localStorage.");
-                attendanceData = { sections: { section1: { students: [], attendance: {} }, section2: { students: [], attendance: {} }, section3: { students: [], attendance: {} } }, studentDetails: {} };
+        const d = localStorage.getItem(DATA_KEY);
+        const defaultData = { sections: { section1: { students: [], attendance: {} } }, studentDetails: {}, watchlist: [], settings: {} };
+        attendanceData = { ...defaultData, ...JSON.parse(d || '{}') };
+        ['section1', 'section2', 'section3'].forEach(s => {
+            attendanceData.sections[s] = attendanceData.sections[s] || { students: [], attendance: {} };
+        });
+        sectionSelector.value = localStorage.getItem('lastSection_v42') || 'section1';
+        applyTheme(attendanceData.settings.theme);
+        const wakeLockToggle = document.getElementById('wake-lock-toggle');
+        if(wakeLockToggle) {
+            wakeLockToggle.checked = !!attendanceData.settings.wakeLock;
+            manageWakeLock();
+        }
+    };
+    
+    const updateDateDisplay = () => { document.getElementById('date-picker').valueAsDate = currentDate; document.getElementById('current-date').textContent = currentDate.toLocaleDateString('ur-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); };
+    const getSortedStudents = (section) => (attendanceData.sections[section]?.students || []).slice().sort((a, b) => a.localeCompare(b, 'ur'));
+    const openModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
+    const closeModal = (modalId) => document.getElementById(modalId)?.classList.remove('active');
+    const formatQuantity = (q) => q || 'مقدار';
+
+    const getLastAttendedRecords = (studentIndex, section, count) => {
+        const attendance = attendanceData.sections[section]?.attendance || {};
+        const allDates = Object.keys(attendance).sort((a, b) => b.localeCompare(a));
+        const records = [];
+        for (const dateStr of allDates) {
+            const record = attendance[dateStr]?.[studentIndex];
+            if (record && record.present) {
+                records.push(record);
+                if (records.length === count) break;
             }
         }
-        if (!attendanceData.studentDetails) attendanceData.studentDetails = {};
-        sectionSelector.value = localStorage.getItem('lastSection_v20') || 'section1';
+        return records;
+    };
+    
+    const checkInactivity = (studentIndex, section) => {
+        const checkField = (field) => {
+            const lastThreeRecords = getLastAttendedRecords(studentIndex, section, 3);
+            if (lastThreeRecords.length < 3) return false;
+            return lastThreeRecords.every(rec => !rec[field]);
+        };
+        return { lesson: checkField('lessonQuantity'), homework: checkField('homeworkQuantity'), milestone: checkField('milestoneQuantity') };
     };
 
-    const updateDateDisplay = () => {
-        document.getElementById('date-picker').valueAsDate = currentDate;
-        document.getElementById('current-date').textContent = currentDate.toLocaleDateString('ur-PK', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const checkRepetition = (studentIndex, section) => {
+        const checkField = (field) => {
+            const lastThreeRecords = getLastAttendedRecords(studentIndex, section, 3);
+            if (lastThreeRecords.length < 3) return false;
+            const firstValue = lastThreeRecords[0][field];
+            if (!firstValue) return false;
+            return lastThreeRecords.every(rec => rec[field] === firstValue);
+        };
+        return { lesson: checkField('lessonQuantity'), homework: checkField('homeworkQuantity'), milestone: checkField('milestoneQuantity') };
+    };
+    
+    const getWeekStart = (date) => {
+        const d = new Date(date);
+        const day = d.getDay(); // 0=Sun, 5=Fri
+        const diff = d.getDate() - (day + 2) % 7;
+        d.setDate(diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
     };
 
-    const getSortedStudentMap = (section) => {
-        const students = attendanceData.sections[section]?.students || [];
-        return students
-            .map((name, index) => ({ name, originalIndex: index }))
-            .sort((a, b) => a.name.localeCompare(b.name, 'ur'));
+    const getWeeklyStatusGraphHTML = (studentIndex, section) => {
+        let graphHTML = '';
+        const weekStart = getWeekStart(currentDate);
+        for (let i = 0; i < 6; i++) {
+            const dayToCheck = new Date(weekStart);
+            dayToCheck.setDate(weekStart.getDate() + i);
+            const dateStr = dayToCheck.toISOString().split('T')[0];
+            const record = attendanceData.sections[section]?.attendance[dateStr]?.[studentIndex];
+            if (record) {
+                if (record.present) {
+                    if (record.lessonQuantity || record.homeworkQuantity || record.milestoneQuantity) {
+                        graphHTML += '<div class="status-dot blue" title="سبق سنایا"></div>';
+                    } else {
+                        graphHTML += '<div class="status-dot red" title="سبق نہیں سنایا"></div>';
+                    }
+                } else {
+                    graphHTML += '<div class="status-dot grey" title="غیر حاضر"></div>';
+                }
+            } else {
+                graphHTML += '<div class="status-dot"></div>';
+            }
+        }
+        return `<div class="weekly-dots-graph">${graphHTML}</div>`;
     };
 
     const renderAttendanceTable = () => {
         const dateStr = currentDate.toISOString().split('T')[0];
         const section = sectionSelector.value;
-        if (!attendanceData.sections[section] || !attendanceData.sections[section].attendance[dateStr]) {
-            initAppForDate();
-        }
+        initAppForDate();
         const records = attendanceData.sections[section].attendance[dateStr] || [];
-        const sortedStudents = getSortedStudentMap(section);
-
+        const sortedStudents = getSortedStudents(section);
         attendanceTableBody.innerHTML = '';
-        if (!sortedStudents.length) return;
+        sortedStudents.forEach(studentName => {
+            const studentIndex = attendanceData.sections[section].students.indexOf(studentName);
+            const record = records[studentIndex] || {};
+            const inactivity = checkInactivity(studentIndex, section);
+            const repetition = checkRepetition(studentIndex, section);
 
-        sortedStudents.forEach(student => {
-            const index = student.originalIndex;
-            const record = records[index] || {};
-            const studentDetail = attendanceData.studentDetails[student.name] || {};
-            const phone = studentDetail.phone || '';
+            const lessonWarnings = `${inactivity.lesson ? `<i class="fas fa-exclamation-triangle warning-icon" title="3 دن سے سبق نہیں سنایا"></i>` : ''}${repetition.lesson ? `<i class="fas fa-redo warning-icon" title="3 دن سے وہی سبق دہرا رہا ہے"></i>` : ''}`;
+            const homeworkWarnings = `${inactivity.homework ? `<i class="fas fa-exclamation-triangle warning-icon" title="3 دن سے سبقی نہیں سنائی"></i>` : ''}${repetition.homework ? `<i class="fas fa-redo warning-icon" title="3 دن سے وہی سبقی دہرا رہا ہے"></i>` : ''}`;
+            const milestoneWarnings = `${inactivity.milestone ? `<i class="fas fa-exclamation-triangle warning-icon" title="3 دن سے منزل نہیں سنائی"></i>` : ''}${repetition.milestone ? `<i class="fas fa-redo warning-icon" title="3 دن سے وہی منزل دہرا رہا ہے"></i>` : ''}`;
+
             const row = document.createElement('tr');
             row.className = record.present ? 'present-row' : 'absent-row';
-            
+            const weeklyGraphHTML = getWeeklyStatusGraphHTML(studentIndex, section);
             row.innerHTML = `
-                <td>
-                    <span class="student-name-clickable" data-action="show-report" data-student-name="${student.name}">${student.name}</span>
-                    <span class="phone-number">
-                        <i class="fas fa-edit" data-action="edit-name" data-index="${index}" title="نام بدلیں"></i>
-                        <i class="fas fa-phone" data-action="edit-phone" data-student-name="${student.name}" title="نمبر بدلیں"></i>
-                        ${phone}
-                    </span>
-                </td>
-                <td><div class="attendance-cell-content" style="justify-content: center;"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="present" ${record.present ? 'checked' : ''}></div></td>
-                <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="lesson" ${record.lesson ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="lessonQuantity">${record.lessonQuantity || 'مقدار'}</span></div></td>
-                <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="homework" ${record.homework ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="homeworkQuantity">${record.homeworkQuantity || 'مقدار'}</span></div></td>
-                <td><div class="attendance-cell-content"><input type="checkbox" class="attendance-check" data-index="${index}" data-field="milestone" ${record.milestone ? 'checked' : ''} ${!record.present ? 'disabled' : ''}><span class="quantity-info" data-action="edit-quantity" data-index="${index}" data-field="milestoneQuantity">${record.milestoneQuantity || 'مقدار'}</span></div></td>
-                <td><div class="attendance-cell-content" style="justify-content: center;">${phone ? `<button class="small-btn" data-action="share-whatsapp-daily" data-student-name="${student.name}" data-phone="${phone}" title="آج کی رپورٹ بھیجیں" style="background-color: #25D366; color: white;"><i class="fab fa-whatsapp"></i></button>` : ''}</div></td>
-            `;
+            <td>
+                <div class="student-name-container">
+                    <i class="fas fa-star watchlist-star ${attendanceData.watchlist.includes(studentName)?'active':''}" data-action="toggle-watchlist" data-student-name="${studentName}"></i>
+                    <span class="student-name" data-action="show-report" data-student-name="${studentName}">${studentName}</span>
+                    <i class="fas fa-edit" data-action="edit-student" data-student-name="${studentName}" title="ترمیم" style="cursor:pointer; color:var(--secondary-color);"></i>
+                    <i class="fab fa-whatsapp" data-action="message-student" data-student-name="${studentName}" title="واٹس ایپ میسج" style="cursor:pointer; color:#25D366; font-size:1.1em;"></i>
+                </div>
+            </td>
+            <td><input type="checkbox" class="attendance-check" data-student-name="${studentName}" ${record.present?'checked':''}></td>
+            <td><div class="attendance-cell-content">
+                <div>${lessonWarnings}<input type="checkbox" class="attendance-check" data-student-name="${studentName}" data-task="lesson" ${record.lessonQuantity?'checked':''} ${!record.present?'disabled':''}></div>
+                <span class="quantity-info" data-action="edit-quantity" data-student-name="${studentName}" data-field="lessonQuantity">${formatQuantity(record.lessonQuantity)}</span>
+            </div></td>
+            <td><div class="attendance-cell-content">
+                <div>${homeworkWarnings}<input type="checkbox" class="attendance-check" data-student-name="${studentName}" data-task="homework" ${record.homeworkQuantity?'checked':''} ${!record.present?'disabled':''}></div>
+                <span class="quantity-info" data-action="edit-quantity" data-student-name="${studentName}" data-field="homeworkQuantity">${formatQuantity(record.homeworkQuantity)}</span>
+            </div></td>
+            <td><div class="attendance-cell-content">
+                <div>${milestoneWarnings}<input type="checkbox" class="attendance-check" data-student-name="${studentName}" data-task="milestone" ${record.milestoneQuantity?'checked':''} ${!record.present?'disabled':''}></div>
+                <span class="quantity-info" data-action="edit-quantity" data-student-name="${studentName}" data-field="milestoneQuantity">${formatQuantity(record.milestoneQuantity)}</span>
+            </div></td>
+            <td>${weeklyGraphHTML}</td>`;
             attendanceTableBody.appendChild(row);
         });
-        applySearchFilter(); 
-    };
-
-    const renderStudentList = () => {
-        const section = sectionSelector.value;
-        const sortedStudents = getSortedStudentMap(section);
-
-        studentListContainer.innerHTML = '';
-        sortedStudents.forEach(student => {
-            const item = document.createElement('div');
-            item.style.display = 'flex'; item.style.justifyContent = 'space-between'; item.style.padding = '5px'; item.style.borderBottom = '1px solid #eee';
-            item.innerHTML = `<span>${student.name}</span><button class="small-btn" data-action="delete-student" data-index="${student.originalIndex}" style="background-color: var(--danger-color); color:white;">حذف</button>`;
-            studentListContainer.appendChild(item);
-        });
-        applyStudentListSearch();
-    };
-    
-    const findInactiveStudentsByCategory = (category) => {
-        const section = sectionSelector.value;
-        const students = attendanceData.sections[section]?.students || [];
-        if (!students.length) return [];
-        
-        const attendance = attendanceData.sections[section]?.attendance || {};
-        const inactiveStudents = [];
-
-        students.forEach((student, studentIndex) => {
-            let hasRecitedInCategory = false;
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(currentDate);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
-                const record = attendance[dateStr] && attendance[dateStr][studentIndex];
-                if (record && record[category]) {
-                    hasRecitedInCategory = true;
-                    break;
-                }
-            }
-            if (!hasRecitedInCategory) {
-                inactiveStudents.push(student);
-            }
-        });
-        return inactiveStudents.sort((a,b) => a.localeCompare(b, 'ur'));
-    };
-    
-    const renderStats = () => {
-        const dateStr = currentDate.toISOString().split('T')[0];
-        const section = sectionSelector.value;
-        const students = attendanceData.sections[section]?.students || [];
-        const records = attendanceData.sections[section]?.attendance[dateStr] || [];
-
-        let presentCount = 0;
-        let absentStudents = [], lessonStudents = [], homeworkStudents = [], milestoneStudents = [];
-        
-        if (students.length > 0) {
-            students.forEach((student, index) => {
-                const record = records[index] || {};
-                if (record.present) {
-                    presentCount++;
-                    if (record.lesson) lessonStudents.push(student);
-                    if (record.homework) homeworkStudents.push(student);
-                    if (record.milestone) milestoneStudents.push(student);
-                } else {
-                    absentStudents.push(student);
-                }
-            });
-        }
-        
-        absentStudents.sort((a,b) => a.localeCompare(b, 'ur'));
-        lessonStudents.sort((a,b) => a.localeCompare(b, 'ur'));
-        homeworkStudents.sort((a,b) => a.localeCompare(b, 'ur'));
-        milestoneStudents.sort((a,b) => a.localeCompare(b, 'ur'));
-        
-        const inactiveInLesson = findInactiveStudentsByCategory('lesson');
-        const inactiveInHomework = findInactiveStudentsByCategory('homework');
-        const inactiveInMilestone = findInactiveStudentsByCategory('milestone');
-
-        const createStatCard = (title, count, names, bgColor, listTitle) => {
-            let namesHtml = '';
-            if (names && names.length > 0) {
-                namesHtml = `<div style="text-align: right; margin-top: 10px; font-size: 0.95em; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 8px;"><p style="font-weight: bold; margin-bottom: 5px; color: var(--dark-color);">${listTitle}:</p><ul style="list-style-type: none; padding-right: 10px; margin: 0; column-count: 2; column-gap: 10px;">${names.map(name => `<li style="margin-bottom: 4px;">${name}</li>`).join('')}</ul></div>`;
-            }
-            return `<div style="background-color: ${bgColor}; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--box-shadow);"><div style="display: flex; justify-content: space-between; align-items: center; text-align: right;"><h4 style="margin: 0; font-size: 1.1em;">${title}</h4><p style="font-size: 1.8em; font-weight: bold; margin: 0; color: var(--dark-color);">${count}</p></div>${namesHtml}</div>`;
-        };
-        
-        const statsContainer = document.getElementById('stats-container');
-        statsContainer.innerHTML = `
-            <h3 style="text-align:center;">آج کا خلاصہ (${currentDate.toLocaleDateString('ur-PK', {month: 'long', day: 'numeric'})})</h3>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${createStatCard('حاضر طلباء', presentCount, null, '#e8f5e9', '')}
-                ${createStatCard('غیر حاضر طلباء', absentStudents.length, absentStudents, '#ffecec', 'غیر حاضر طلباء کی فہرست')}
-                ${createStatCard('سبق سنانے والے', lessonStudents.length, lessonStudents, '#e3f2fd', 'سبق سنانے والوں کی فہرست')}
-                ${createStatCard('سبقی سنانے والے', homeworkStudents.length, homeworkStudents, '#fff9c4', 'سبقی سنانے والوں کی فہرست')}
-                ${createStatCard('منزل سنانے والے', milestoneStudents.length, milestoneStudents, '#fce4ec', 'منزل سنانے والوں کی فہرست')}
-            </div>
-            <hr style="margin: 20px 0;">
-            <h3 style="text-align:center;">ہفتہ وار کارکردگی کا جائزہ</h3>
-             <div style="display: flex; flex-direction: column; gap: 12px;">
-                ${createStatCard('جنہوں نے 7 دن سے سبق نہیں سنایا', inactiveInLesson.length, inactiveInLesson, 'var(--inactive-color)', 'طلباء کی فہرست')}
-                ${createStatCard('جنہوں نے 7 دن سے سبقی نہیں سنائی', inactiveInHomework.length, inactiveInHomework, 'var(--inactive-color)', 'طلباء کی فہرست')}
-                ${createStatCard('جنہوں نے 7 دن سے منزل نہیں سنائی', inactiveInMilestone.length, inactiveInMilestone, 'var(--inactive-color)', 'طلباء کی فہرست')}
-            </div>
-        `;
-    };
-    
-    const applySearchFilter = () => {
-        const searchTerm = searchAttendanceInput.value.trim().toLowerCase();
-        const rows = attendanceTableBody.querySelectorAll('tr');
-        rows.forEach(row => {
-            const studentNameEl = row.querySelector('.student-name-clickable');
-            if (studentNameEl) {
-                const studentName = studentNameEl.textContent.trim().toLowerCase();
-                row.style.display = studentName.includes(searchTerm) ? '' : 'none';
-            }
-        });
-    };
-
-    const applyStudentListSearch = () => {
-        const searchTerm = searchStudentListInput.value.trim().toLowerCase();
-        const items = studentListContainer.querySelectorAll('div');
-        items.forEach(item => {
-            const studentNameEl = item.querySelector('span');
-            if (studentNameEl) {
-                const studentName = studentNameEl.textContent.trim().toLowerCase();
-                item.style.display = studentName.includes(searchTerm) ? 'flex' : 'none';
-            }
-        });
+        applyFilters(); 
     };
     
     const initAppForDate = () => {
         const dateStr = currentDate.toISOString().split('T')[0];
         const section = sectionSelector.value;
-        if (!attendanceData.sections[section]) attendanceData.sections[section] = { students: [], attendance: {} };
-        const students = attendanceData.sections[section].students;
-        
+        const students = attendanceData.sections[section]?.students || [];
         if (!attendanceData.sections[section].attendance[dateStr] || attendanceData.sections[section].attendance[dateStr].length !== students.length) {
-            const defaultRec = () => ({ present: false, lesson: false, homework: false, milestone: false, lessonQuantity: '', homeworkQuantity: '', milestoneQuantity: '' });
-            const existing = attendanceData.sections[section].attendance[dateStr] || [];
-            attendanceData.sections[section].attendance[dateStr] = Array(students.length).fill(null).map((_, i) => existing[i] || defaultRec());
+            const defaultRec = () => ({ present: false, lessonQuantity: '', homeworkQuantity: '', milestoneQuantity: '' });
+            attendanceData.sections[section].attendance[dateStr] = Array.from({length: students.length}, () => defaultRec());
         }
     };
+    
+    const initApp = () => { updateDateDisplay(); renderAttendanceTable(); };
 
-    const initApp = () => {
-        initAppForDate();
-        searchAttendanceInput.value = '';
-        searchStudentListInput.value = '';
-        updateDateDisplay();
-        renderAttendanceTable();
-        renderStudentList();
-        renderStats();
-    };
-
-    const openModal = (modalId) => document.getElementById(modalId).classList.add('active');
-    const closeModal = (modalId) => document.getElementById(modalId).classList.remove('active');
-    const formatPhoneNumberForWhatsApp = (phone) => { let cleaned = phone.replace(/\D/g, ''); if (cleaned.startsWith('03')) cleaned = '92' + cleaned.substring(1); return cleaned; };
-
-    const generateMonthlyReportText = (studentName, dateForReport) => {
-        const month = dateForReport.getMonth(), year = dateForReport.getFullYear();
+    const renderPerformanceTab = () => {
+        const container = document.getElementById('performance-graphs-container');
+        const performanceType = document.getElementById('performance-type-selector').value;
         const section = sectionSelector.value;
-        const reportTitle = `*${studentName} کی ماہانہ کارکردگی رپورٹ* (${new Date(year, month).toLocaleString('ur-PK', { month: 'long', year: 'numeric' })})`;
-        const reportData = generateMonthlyReportFor(studentName, month, year, section);
-        const presentPercent = reportData.totalDays > 0 ? Math.round((reportData.presentDays / reportData.totalDays) * 100) : 0;
-        const summaryText = `*خلاصہ:*\nکل ایام: ${reportData.totalDays}\nحاضری: ${reportData.presentDays} دن (${presentPercent}%)\nغیر حاضری: ${reportData.totalDays - reportData.presentDays} دن`;
-        let monthlyReportText = `${reportTitle}\n\n${summaryText}\n\n*روزانہ کی تفصیل:*\n`;
-        reportData.records.forEach(rec => {
-            const dateString = new Date(rec.date).toLocaleDateString('ur-PK', { day: '2-digit', month: 'short' });
-            let dailyRecord = `*${dateString}:* `;
-            if (rec.present) {
-                dailyRecord += "حاضر ✅\n";
-                let details = [];
-                if (rec.lesson) details.push(`   • *سبق:* ${rec.lessonQuantity || 'سنایا'}`);
-                if (rec.homework) details.push(`   • *سبقی:* ${rec.homeworkQuantity || 'سنائی'}`);
-                if (rec.milestone) details.push(`   • *منزل:* ${rec.milestoneQuantity || 'سنائی'}`);
-                if (details.length > 0) dailyRecord += details.join('\n');
-                else dailyRecord += "   • کوئی سبق نہیں سنایا گیا۔";
-            } else { dailyRecord += "غیر حاضر ❌"; }
-            monthlyReportText += dailyRecord + "\n\n";
+        const students = getSortedStudents(section);
+        container.innerHTML = '';
+        if (students.length === 0) {
+            container.innerHTML = '<p>اس سیکشن میں کوئی طالب علم موجود نہیں۔</p>';
+            return;
+        }
+        students.forEach(studentName => {
+            const details = attendanceData.studentDetails[studentName] || {};
+            let total = 0, progress = 0, progressText = 'کوئی ہدف مقرر نہیں';
+            if (performanceType === 'milestone') {
+                const start = parseInt(details.milestoneStart) || 0;
+                const end = parseInt(details.milestoneEnd) || 0;
+                if (start && end) {
+                    total = Math.abs(end - start) + 1;
+                    const studentIndex = attendanceData.sections[section].students.indexOf(studentName);
+                    const lastEntry = findLastEntries(studentIndex, section).milestoneQuantity;
+                    let lastPara = 0;
+                    if (lastEntry.value) {
+                         const match = lastEntry.value.match(/پارہ (\d+)/);
+                         if (match) lastPara = parseInt(match[1]);
+                    }
+                    if(lastPara > 0){
+                       progress = details.milestoneOrder === 'reverse' ? (end - lastPara + 1) : (lastPara - start + 1);
+                    }
+                    progress = Math.max(0, Math.min(total, progress));
+                    progressText = `${progress} / ${total} پارے`;
+                }
+            } else {
+                total = parseInt(details.homeworkTotal) || 0;
+                if (total > 0) {
+                    progress = 0; 
+                    progressText = `کل ${total} صفحات/آیات`;
+                }
+            }
+            const percentage = total > 0 ? (progress / total) * 100 : 0;
+            container.innerHTML += `
+                <div class="student-progress-container">
+                    <div class="student-progress-header">
+                        <span class="student-progress-name">${studentName}</span>
+                        <span>${progressText}</span>
+                    </div>
+                    <div class="progress-bar-background">
+                        <div class="progress-bar-fill" style="width: ${percentage}%;">${percentage.toFixed(0)}%</div>
+                    </div>
+                </div>`;
         });
-        monthlyReportText += `\n- بذریعہ حفظ ٹریکر ایپ`;
-        return monthlyReportText;
+    };
+    
+    const findLastEntries = (studentIndex, section) => {
+        const result = { 
+            lessonQuantity: { value: null, date: null }, 
+            homeworkQuantity: { value: null, date: null }, 
+            milestoneQuantity: { value: null, date: null } 
+        };
+        const attendance = attendanceData.sections[section]?.attendance || {};
+        const allDates = Object.keys(attendance).sort((a, b) => b.localeCompare(a));
+        const fields = Object.keys(result);
+        for (const dateStr of allDates) {
+            if (fields.every(f => result[f].value !== null)) break;
+            const record = attendance[dateStr]?.[studentIndex];
+            if (record) {
+                fields.forEach(field => {
+                    if (result[field].value === null && record[field]) {
+                        result[field].value = record[field];
+                        result[field].date = new Date(dateStr).toLocaleDateString('ur-PK', {day:'numeric', month:'short'});
+                    }
+                });
+            }
+        }
+        return result;
+    };
+    
+    const checkWeeklyNegligence = (studentIndex, section) => {
+        const negligence = { isNeglectful: false, reasons: [] };
+        const found = { lesson: false, homework: false, milestone: false };
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(currentDate);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const record = attendanceData.sections[section]?.attendance[dateStr]?.[studentIndex];
+            if (record) {
+                if (record.lessonQuantity) found.lesson = true;
+                if (record.homeworkQuantity) found.homework = true;
+                if (record.milestoneQuantity) found.milestone = true;
+            }
+        }
+        if (!found.lesson) negligence.reasons.push('سبق نہیں سنایا');
+        if (!found.homework) negligence.reasons.push('سبقی نہیں سنائی');
+        if (!found.milestone) negligence.reasons.push('منزل نہیں سنائی');
+
+        if (negligence.reasons.length > 0) {
+            negligence.isNeglectful = true;
+        }
+        return negligence;
+    };
+    
+    // --- تمام معاون فنکشنز یہاں سے شروع ---
+    
+    const renderStudentManagement = () => {
+        const container = document.getElementById('student-list-management');
+        const section = sectionSelector.value;
+        const students = getSortedStudents(section);
+        container.innerHTML = `<div class="management-section"><h3>نئے طالب علم کا اضافہ</h3><button class="save-btn-full" data-action="add-student">نیا طالب علم شامل کریں</button></div>
+        <div class="management-section"><h3>موجودہ طلباء</h3>
+        ${students.map(name => `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; align-items:center;">
+        <span>${name}</span><div><button class="small-btn" data-action="edit-student" data-student-name="${name}"><i class="fas fa-edit"></i> ترمیم</button>
+        <button class="small-btn" data-action="delete-student" data-student-name="${name}" style="background-color:var(--danger-color);"><i class="fas fa-trash"></i> حذف</button></div></div>`).join('')||'<p>کوئی طالب علم موجود نہیں۔</p>'}</div>`;
     };
 
-    const generateMonthlyReportFor = (studentName, month, year, section) => {
-        const report = { records: [], totalDays: 0, presentDays: 0 };
-        const studentIndex = attendanceData.sections[section]?.students.indexOf(studentName);
-        if (studentIndex === -1) return report;
-        const attendance = attendanceData.sections[section]?.attendance || {};
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const renderDailyStats = () => {
+        const container = document.getElementById('daily-stats-container');
+        const section = sectionSelector.value;
+        const students = attendanceData.sections[section].students;
+        const records = attendanceData.sections[section].attendance[currentDate.toISOString().split('T')[0]] || [];
+        let presentCount = 0, absent = [], lesson = [], homework = [], milestone = [];
+        let neglectfulStudents = [];
+
+        students.forEach((name, index) => {
+            if (records[index]?.present) presentCount++; else absent.push(name);
+            if(records[index]?.lessonQuantity) lesson.push(`${name} (${records[index].lessonQuantity})`);
+            if(records[index]?.homeworkQuantity) homework.push(`${name} (${records[index].homeworkQuantity})`);
+            if(records[index]?.milestoneQuantity) milestone.push(`${name} (${records[index].milestoneQuantity})`);
+            
+            const negligenceInfo = checkWeeklyNegligence(index, section);
+            if(negligenceInfo.isNeglectful) {
+                neglectfulStudents.push({ name, reasons: negligenceInfo.reasons.join('، ') });
+            }
+        });
+
+        const createCard = (title, count, names, color) => {
+            let content = '';
+            if (Array.isArray(names) && names.length > 0) {
+                content = `<p>${names.join(', ')}</p>`;
+            } else if (typeof names === 'string' && names) {
+                content = names;
+            }
+            return `<div class="management-section" style="border-right: 4px solid ${color};"><h4>${title}: ${count}</h4>${content}</div>`;
+        };
+
+        const neglectfulStudentsHTML = neglectfulStudents.map(s => `<p><strong>${s.name}:</strong> <span class="student-reason">${s.reasons}</span></p>`).join('');
+
+        container.innerHTML = createCard('حاضر', presentCount, [], 'var(--success-color)') 
+            + createCard('غیر حاضر', absent.length, absent, 'var(--danger-color)') 
+            + createCard('سبق سنانے والے', lesson.length, lesson, 'var(--primary-color)') 
+            + createCard('سبقی سنانے والے', homework.length, homework, 'var(--primary-color)') 
+            + createCard('منزل سنانے والے', milestone.length, milestone, 'var(--primary-color)')
+            + createCard('غافل طلباء (گزشتہ 7 دن)', neglectfulStudents.length, neglectfulStudentsHTML, 'var(--danger-color)')
+            + createCard('خاص توجہ کے لائق طلباء', attendanceData.watchlist.length, attendanceData.watchlist, 'var(--warning-color)');
+    };
+    
+    const renderQuantityModule = (studentName, field, record) => {
+        const container = document.getElementById('quantity-module-content');
+        const value = record[field] || '';
+        const reminderMsg = document.getElementById('reminder-message');
+        const studentIndex = attendanceData.sections[sectionSelector.value].students.indexOf(studentName);
+        const lastEntries = findLastEntries(studentIndex, sectionSelector.value);
+        let reminderHTML = '<h5 style="margin: 0 0 8px 0; padding-bottom: 5px; border-bottom: 1px solid #ddd;">آخری اندراجات</h5>';
+        let hasAnyReminder = false;
+        const formatReminderLine = (label, entry) => { 
+            if (entry.value) { 
+                hasAnyReminder = true; 
+                return `<p style="margin: 4px 0;"><strong>${label}:</strong> ${entry.value} <span style="font-size: 0.8em; opacity: 0.8;">(${entry.date})</span></p>`; 
+            } 
+            return ''; 
+        };
+        reminderHTML += formatReminderLine('سبق', lastEntries.lessonQuantity);
+        reminderHTML += formatReminderLine('سبقی', lastEntries.homeworkQuantity);
+        reminderHTML += formatReminderLine('منزل', lastEntries.milestoneQuantity);
+        reminderMsg.style.display = hasAnyReminder ? 'block' : 'none';
+        if (hasAnyReminder) reminderMsg.innerHTML = reminderHTML;
+        
+        let contentHTML = `<div class="input-group"><input type="text" id="quantity-input-text" value="${value}" placeholder="مقدار درج کریں..."></div><div id="quantity-quick-btns">`;
+        let paraSelectorHTML = `<select id="para-selector"><option value="">پارہ منتخب کریں</option>${Array.from({length:30},(_,i)=>i+1).map(p=>`<option value="${p}">پارہ ${p}</option>`).join('')}</select>`;
+        if (field === 'milestoneQuantity') {
+            contentHTML += `<div class="input-row">${paraSelectorHTML}<input id="line-or-page-input" type="number" placeholder="آیت/صفحہ" style="width: 100px;"></div>`;
+            contentHTML += ['ربع 1', 'ربع 2', 'ربع 3', 'ربع 4', 'صفحہ', 'رکوع'].map(q => `<div class="quick-btn">${q}</div>`).join('');
+        } else if (field === 'homeworkQuantity') {
+            contentHTML += `<div class="input-row">${paraSelectorHTML}<input id="line-or-page-input" type="number" placeholder="صفحہ نمبر" style="width: 100px;"></div>`;
+            contentHTML += ['صفحہ', 'رکوع', 'ربع 1', 'ربع 2'].map(q => `<div class="quick-btn">${q}</div>`).join('');
+        } else {
+            contentHTML += `<div class="input-row">${paraSelectorHTML}<input id="line-or-page-input" type="number" placeholder="لائن نمبر" style="width: 100px;"></div>`;
+            contentHTML += ['لائن', 'صفحہ', 'رکوع'].map(q => `<div class="quick-btn">${q}</div>`).join('');
+        }
+        container.innerHTML = contentHTML + `</div>`;
+        container.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => { const input = document.getElementById('quantity-input-text'); const para = container.querySelector('#para-selector')?.value; const lineOrPage = container.querySelector('#line-or-page-input')?.value; let text = para ? `پارہ ${para}, ` : ''; if (lineOrPage) text += `${lineOrPage} `; text += btn.textContent; input.value = text.trim(); }));
+    };
+
+    const renderAndShowStudentReport = (studentName, date) => {
+        currentModalInfo = { studentName, reportDate: date };
+        const reportTitle = document.getElementById('student-report-title');
+        const reportContent = document.getElementById('student-report-content');
+        if (reportTitle) reportTitle.textContent = `${studentName} - ${date.toLocaleDateString('ur-PK', {month:'long', year:'numeric'})}`;
+        const section = sectionSelector.value;
+        const studentIndex = attendanceData.sections[section].students.indexOf(studentName);
+        if(studentIndex === -1) { reportContent.innerHTML = 'طالب علم نہیں ملا۔'; openModal('student-report-modal'); return; }
+        const attendance = attendanceData.sections[section].attendance;
+        const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+        let records = [];
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateObj = new Date(year, month, day);
+            const dateObj = new Date(date.getFullYear(), date.getMonth(), day);
             const dateStr = dateObj.toISOString().split('T')[0];
             if (attendance[dateStr] && attendance[dateStr][studentIndex]) {
-                const record = attendance[dateStr][studentIndex];
-                report.records.push({ date: dateStr, ...record });
-                report.totalDays++;
-                if(record.present) report.presentDays++;
+                records.push({ date: dateStr, ...attendance[dateStr][studentIndex] });
             }
         }
-        report.records.sort((a,b) => new Date(a.date) - new Date(b.date));
-        return report;
-    };
-    
-    const renderAndShowStudentReport = (studentName, dateForReport) => {
-        currentModalInfo.reportDate = dateForReport;
-        const month = dateForReport.getMonth(), year = dateForReport.getFullYear();
-        const section = sectionSelector.value;
-        
-        const reportTitle = `${studentName} (${new Date(year, month).toLocaleString('ur-PK', { month: 'long', year: 'numeric' })})`;
-        document.getElementById('student-report-title').textContent = reportTitle;
-        
-        const reportData = generateMonthlyReportFor(studentName, month, year, section);
-        const reportContent = document.getElementById('student-report-content');
-        let tableHTML = `<table style="font-size:0.9em;width:100%;"><thead><tr><th>تاریخ</th><th>حاضری</th><th>سبق</th><th>سبقی</th><th>منزل</th></tr></thead><tbody>`;
-        if (reportData.records.length > 0) {
-            reportData.records.forEach(rec => {
-                tableHTML += `<tr class="${rec.present ? 'present-row' : 'absent-row'}">
-                    <td>${new Date(rec.date).toLocaleDateString('ur-PK', {day:'numeric', month:'short'})}</td>
-                    <td>${rec.present ? 'حاضر' : 'غیرحاضر'}</td>
-                    <td>${rec.present ? (rec.lesson ? (rec.lessonQuantity || '✔') : '✘') : '-'}</td>
-                    <td>${rec.present ? (rec.homework ? (rec.homeworkQuantity || '✔') : '✘') : '-'}</td>
-                    <td>${rec.present ? (rec.milestone ? (rec.milestoneQuantity || '✔') : '✘') : '-'}</td></tr>`;
-            });
-        } else {
-            tableHTML += `<tr><td colspan="5" style="text-align:center;">اس مہینے کا کوئی ریکارڈ موجود نہیں۔</td></tr>`;
+        if (reportContent) {
+            let tableHTML = `<table style="font-size:0.9em;width:100%;"><thead><tr><th>تاریخ</th><th>حاضری</th><th>سبق</th><th>سبقی</th><th>منزل</th></tr></thead><tbody>`;
+            if (records.length > 0) {
+                records.forEach(rec => {
+                    tableHTML += `<tr class="${rec.present ? 'present-row' : 'absent-row'}"><td>${new Date(rec.date).toLocaleDateString('ur-PK', {day:'numeric', month:'short'})}</td><td>${rec.present ? 'حاضر' : 'غیرحاضر'}</td><td>${rec.present ? (rec.lessonQuantity || '✘') : '-'}</td><td>${rec.present ? (rec.homeworkQuantity || '✘') : '-'}</td><td>${rec.present ? (rec.milestoneQuantity || '✘') : '-'}</td></tr>`;
+                });
+            } else { tableHTML += `<tr><td colspan="5" style="text-align:center;">اس مہینے کا کوئی ریکارڈ موجود نہیں۔</td></tr>`; }
+            reportContent.innerHTML = tableHTML + '</tbody></table>';
         }
-        reportContent.innerHTML = tableHTML + '</tbody></table>';
-        
-        const presentPercent = reportData.totalDays > 0 ? Math.round((reportData.presentDays/reportData.totalDays)*100) : 0;
-        document.getElementById('student-report-summary').textContent = `خلاصہ: ${reportData.presentDays}/${reportData.totalDays} دن حاضری (${presentPercent}%)`;
-        
-        openModal('student-monthly-report-modal');
-    };
-    
-    const showStudentMonthlyReportModal = (studentName) => {
-        currentModalInfo.studentName = studentName;
-        renderAndShowStudentReport(studentName, new Date());
+        openModal('student-report-modal');
     };
 
-    const shareAsUrduPDF = async (studentName) => {
-        showToast('PDF بنائی جا رہی ہے...');
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const modalContent = document.querySelector('#student-monthly-report-modal .modal-content');
-        const dateForReport = currentModalInfo.reportDate || new Date();
-        const fileName = `${studentName}_report_${dateForReport.getFullYear()}_${dateForReport.getMonth()+1}.pdf`;
-
-        try {
-            const canvas = await html2canvas(modalContent, {
-                scale: 2,
-                backgroundColor: '#ffffff',
-                useCORS: true,
-                ignoreElements: (element) => element.classList.contains('share-buttons') || element.classList.contains('close')
-            });
-            const imgData = canvas.toDataURL('image/png');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-            if (isNative && Share && Filesystem) {
-                const pdfData = pdf.output('datauristring').split(',')[1];
-                const result = await Filesystem.writeFile({
-                    path: fileName,
-                    data: pdfData,
-                    directory: Directory.Cache,
-                });
-                await Share.share({
-                    title: `رپورٹ: ${studentName}`,
-                    url: result.uri,
-                    dialogTitle: 'رپورٹ شیئر کریں'
-                });
-            } else {
-                pdf.save(fileName);
-            }
-
-        } catch (error) { 
-            console.error("PDF generation/sharing failed:", error); 
-            showToast("PDF بنانے یا شیئر کرنے میں خرابی۔"); 
-        }
-    };
-    
-    // =========================================================================================
-    // *** بیک اپ کا درست شدہ اور مکمل فنکشن ***
-    // =========================================================================================
-    document.getElementById('backup-btn').addEventListener('click', async () => {
-        const dataStr = JSON.stringify(attendanceData, null, 2);
-        const dateSuffix = new Date().toISOString().split('T')[0];
-        const fileName = `hifz_tracker_backup_${dateSuffix}.json`;
-
-        // نیٹو ایپ (اینڈرائیڈ) کے لیے شیئر مینیو استعمال کریں
-        if (isNative && Filesystem && Share && Encoding) {
-            try {
-                // فائل کو عارضی ڈائرکٹری میں محفوظ کریں
-                const result = await Filesystem.writeFile({
-                    path: fileName,
-                    data: dataStr,
-                    directory: Directory.Cache, // <-- اہم تبدیلی
-                    encoding: Encoding.UTF8,
-                });
-
-                // شیئر مینیو کھولیں
-                await Share.share({
-                    title: 'حفظ ٹریکر بیک اپ',
-                    text: 'یہاں آپ کی بیک اپ فائل ہے۔',
-                    url: result.uri,
-                    dialogTitle: 'بیک اپ فائل شیئر کریں'
-                });
-            } catch (error) { 
-                showToast('بیک اپ شیئر کرنے میں خرابی ہوئی۔'); 
-                console.error("Native backup share error:", error); 
-            }
-        } else {
-            // ویب براؤزر کے لیے فائل براہ راست ڈاؤن لوڈ کریں (یہ پہلے ہی ٹھیک تھا)
-            try {
-                const blob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; 
-                a.download = fileName;
-                document.body.appendChild(a); 
-                a.click(); 
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                showToast('بیک اپ فائل ڈاؤن لوڈ ہو رہی ہے۔');
-            } catch (error) {
-                showToast('بیک اپ ڈاؤن لوڈ کرنے میں خرابی ہوئی۔'); 
-                console.error("Web backup download error:", error); 
-            }
-        }
-    });
+    const manageWakeLock = async () => { if (!('wakeLock' in navigator)) { document.getElementById('wake-lock-toggle').disabled = true; return; } try { if (attendanceData.settings.wakeLock && document.visibilityState === 'visible') { if (wakeLock === null) { wakeLock = await navigator.wakeLock.request('screen'); } } else if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } } catch (err) { if(wakeLock) await wakeLock.release(); wakeLock = null; } };
+    const applyFilters = () => { const searchTerm = document.getElementById('search-attendance').value.trim().toLowerCase(); const showWatchedOnly = document.getElementById('watchlist-toggle').checked; attendanceTableBody.querySelectorAll('tr').forEach(row => { const studentNameEl = row.querySelector('.student-name'); const starEl = row.querySelector('.watchlist-star'); if (studentNameEl && starEl) { const studentName = studentNameEl.textContent.trim().toLowerCase(); const isOnWatchlist = starEl.classList.contains('active'); const searchMatch = studentName.includes(searchTerm); const watchlistMatch = !showWatchedOnly || isOnWatchlist; row.style.display = (searchMatch && watchlistMatch) ? '' : 'none'; } }); };
 
     (function setupListeners() {
-        document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', function() {
+        themeToggle.addEventListener('click', () => { const newTheme=document.body.classList.contains('dark-theme')?'light':'dark'; attendanceData.settings.theme=newTheme; applyTheme(newTheme); saveData(); });
+        document.getElementById('wake-lock-toggle').addEventListener('change', (e) => { attendanceData.settings.wakeLock = e.target.checked; manageWakeLock(); saveData(); });
+        document.addEventListener('visibilitychange', manageWakeLock);
+        document.getElementById('search-attendance').addEventListener('input', applyFilters);
+        document.getElementById('watchlist-toggle').addEventListener('change', applyFilters);
+        document.getElementById('date-picker').addEventListener('change', (e) => { currentDate = e.target.valueAsDate ? new Date(e.target.valueAsDate.valueOf() + e.target.valueAsDate.getTimezoneOffset() * 60000) : new Date(); initApp(); });
+        sectionSelector.addEventListener('change', () => { localStorage.setItem('lastSection_v42', sectionSelector.value); initApp(); if(document.getElementById('performance-tab').classList.contains('active')) renderPerformanceTab(); });
+        
+        document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', function(e) {
             document.querySelector('.tab.active')?.classList.remove('active');
-            document.querySelector('.tab-content.active')?.classList.remove('active');
-            this.classList.add('active');
-            document.getElementById(this.dataset.tab + '-tab').classList.add('active');
-            if (this.dataset.tab === 'stats') renderStats();
+            e.currentTarget.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(e.currentTarget.dataset.tab + '-tab').classList.add('active');
+            if (e.currentTarget.dataset.tab === 'students') renderStudentManagement();
+            if (e.currentTarget.dataset.tab === 'stats') renderDailyStats();
+            if (e.currentTarget.dataset.tab === 'performance') renderPerformanceTab();
         }));
-
-        document.getElementById('date-picker').addEventListener('change', (e) => { 
-            currentDate = e.target.valueAsDate ? new Date(e.target.valueAsDate.valueOf() + e.target.valueAsDate.getTimezoneOffset() * 60000) : new Date();
-            initApp(); 
-        });
-        sectionSelector.addEventListener('change', () => { 
-            localStorage.setItem('lastSection_v20', sectionSelector.value); 
-            initApp(); 
-        });
-
-        searchAttendanceInput.addEventListener('input', applySearchFilter);
-        searchStudentListInput.addEventListener('input', applyStudentListSearch);
+        
+        document.getElementById('performance-type-selector').addEventListener('change', renderPerformanceTab);
 
         attendanceTableBody.addEventListener('change', (e) => {
             if (e.target.classList.contains('attendance-check')) {
-                const index = parseInt(e.target.dataset.index), field = e.target.dataset.field;
-                const dateStr = currentDate.toISOString().split('T')[0], section = sectionSelector.value;
-                const record = attendanceData.sections[section].attendance[dateStr][index];
-                record[field] = e.target.checked;
-                if (field === 'present' && !e.target.checked) {
-                    record.lesson = record.homework = record.milestone = false;
+                const studentName = e.target.dataset.studentName; const task = e.target.dataset.task;
+                const section = sectionSelector.value; const studentIndex = attendanceData.sections[section].students.indexOf(studentName); if (studentIndex === -1) return;
+                const dateStr = currentDate.toISOString().split('T')[0]; const record = attendanceData.sections[section].attendance[dateStr][studentIndex];
+                if (task) { 
+                    if (e.target.checked && !record[task + 'Quantity']) { 
+                        const field = task + 'Quantity'; 
+                        currentModalInfo = { studentName, field }; 
+                        document.getElementById('quantity-title').textContent = `${studentName} - ${field.replace('Quantity','')}`; 
+                        renderQuantityModule(studentName, field, record); 
+                        openModal('quantity-modal'); 
+                    } else if (!e.target.checked) {
+                        record[task + 'Quantity'] = ''; 
+                    }
+                } else { 
+                    record.present = e.target.checked; 
+                    if(!e.target.checked) { record.lessonQuantity = ''; record.homeworkQuantity = ''; record.milestoneQuantity = ''; } 
                 }
                 saveData(); 
-                renderAttendanceTable(); 
-            }
-        });
-
-        document.body.addEventListener('click', (e) => {
-            const target = e.target.closest('[data-action]'); if (!target) return;
-            const action = target.dataset.action, indexStr = target.dataset.index, studentName = target.dataset.studentName;
-            const index = parseInt(indexStr);
-            const section = sectionSelector.value;
-            const students = attendanceData.sections[section]?.students;
-            
-            switch (action) {
-                case 'delete-student':
-                    if (confirm(`کیا آپ واقعی طالب علم "${students[index]}" کو حذف کرنا چاہتے ہیں؟`)) {
-                        const studentToDelete = students[index];
-                        students.splice(index, 1);
-                        delete attendanceData.studentDetails[studentToDelete];
-                        Object.values(attendanceData.sections[section].attendance).forEach(day => {
-                           if(day.length > index) day.splice(index, 1)
-                        });
-                        saveData(); initApp();
-                    }
-                    break;
-                case 'edit-name':
-                    currentModalInfo = { originalIndex: index, oldName: students[index] };
-                    document.getElementById('name-input').value = students[index];
-                    openModal('name-modal');
-                    break;
-                 case 'edit-quantity':
-                    const field = target.dataset.field, dateStr = currentDate.toISOString().split('T')[0];
-                    const record = attendanceData.sections[section].attendance[dateStr][index];
-                    currentModalInfo = { index, field };
-                    document.getElementById('quantity-title').textContent = `${students[index]} - ${field.replace('Quantity', '')}`;
-                    const currentQuantity = record[field] || '1';
-                    document.getElementById('quantity-preview').value = currentQuantity;
-                    document.getElementById('stepper-value').textContent = parseInt(currentQuantity) || 1; 
-                    document.getElementById('para-selector').value = "";
-                    openModal('quantity-assistant-modal');
-                    break;
-                 case 'show-report': showStudentMonthlyReportModal(studentName); break;
-                 case 'edit-phone':
-                    currentModalInfo = { studentName };
-                    document.getElementById('phone-input').value = (attendanceData.studentDetails[studentName] || {}).phone || '';
-                    openModal('phone-modal');
-                    break;
-                 case 'share-whatsapp-daily':
-                    const phone = target.dataset.phone; if (!phone) return showToast('اس طالب علم کا فون نمبر موجود نہیں');
-                    window.open(`https://wa.me/${formatPhoneNumberForWhatsApp(phone)}?text=${encodeURIComponent(generateMonthlyReportText(studentName, currentDate))}`, '_blank');
-                    break;
+                renderAttendanceTable();
             }
         });
         
-        document.getElementById('add-student-btn').addEventListener('click', () => {
-            const nameInput = document.getElementById('new-student-name'), phoneInput = document.getElementById('new-student-phone');
-            const newName = nameInput.value.trim(), section = sectionSelector.value;
-            const students = attendanceData.sections[section].students;
-            if (newName && !students.includes(newName)) {
-                students.push(newName);
-                Object.keys(attendanceData.sections[section].attendance).forEach(dateStr => {
-                    attendanceData.sections[section].attendance[dateStr].push({ present: false, lesson: false, homework: false, milestone: false, lessonQuantity: '', homeworkQuantity: '', milestoneQuantity: '' });
-                });
-                if (phoneInput.value.trim()) {
-                    attendanceData.studentDetails[newName] = { phone: phoneInput.value.trim() };
-                }
-                saveData(); initApp(); 
-                nameInput.value = ''; phoneInput.value = '';
-            } else { showToast("نام خالی ہے یا پہلے سے موجود ہے۔"); }
-        });
-        
-        document.getElementById('save-name').addEventListener('click', () => {
-            const { originalIndex, oldName } = currentModalInfo;
-            const newName = document.getElementById('name-input').value.trim();
-            const section = sectionSelector.value;
-            const students = attendanceData.sections[section].students;
-
-            if (!newName) { showToast('نام خالی نہیں ہو سکتا۔'); return; }
-            if (newName !== oldName && students.includes(newName)) { showToast('یہ نام پہلے سے موجود ہے۔'); return; }
-
-            students[originalIndex] = newName;
-
-            if (attendanceData.studentDetails[oldName]) {
-                attendanceData.studentDetails[newName] = attendanceData.studentDetails[oldName];
-                if (oldName !== newName) delete attendanceData.studentDetails[oldName];
-            }
-            saveData(); initApp(); closeModal('name-modal');
-            showToast('نام کامیابی سے تبدیل کر دیا گیا۔');
-        });
-        
-        document.getElementById('save-phone').addEventListener('click', () => {
-            const { studentName } = currentModalInfo;
-            const newPhone = document.getElementById('phone-input').value.trim();
-            if (!attendanceData.studentDetails[studentName]) attendanceData.studentDetails[studentName] = {};
-            attendanceData.studentDetails[studentName].phone = newPhone;
-            saveData(); initApp(); closeModal('phone-modal');
-            showToast('فون نمبر اپ ڈیٹ ہو گیا۔');
-        });
-
-        const quantityPreview = document.getElementById('quantity-preview');
-        const stepperValueEl = document.getElementById('stepper-value');
-        const paraSelector = document.getElementById('para-selector');
-        
-        document.getElementById('stepper-plus').addEventListener('click', () => { let val = parseInt(stepperValueEl.textContent) + 1; stepperValueEl.textContent = val; quantityPreview.value = /^\d+/.test(quantityPreview.value) ? quantityPreview.value.replace(/^\d+/, val) : val; });
-        document.getElementById('stepper-minus').addEventListener('click', () => { let val = parseInt(stepperValueEl.textContent); if (val > 1) { val--; stepperValueEl.textContent = val; quantityPreview.value = /^\d+/.test(quantityPreview.value) ? quantityPreview.value.replace(/^\d+/, val) : val; } });
-        document.getElementById('quick-btns-container').addEventListener('click', (e) => { if (e.target.classList.contains('quick-btn')) { quantityPreview.value = (/^\d+$/.test(quantityPreview.value) ? quantityPreview.value + ' ' : quantityPreview.value ? quantityPreview.value + ' ' : '') + e.target.textContent; } });
-        paraSelector.addEventListener('change', () => { if (paraSelector.value) { quantityPreview.value = (quantityPreview.value + ` پارہ ${paraSelector.value}`).trim(); paraSelector.value = ""; } });
-        document.getElementById('clear-quantity-btn').addEventListener('click', () => { quantityPreview.value = ''; stepperValueEl.textContent = '1'; quantityPreview.focus(); });
-        document.getElementById('save-quantity-assistant').addEventListener('click', () => {
-            const { index, field } = currentModalInfo;
-            const section = sectionSelector.value;
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const value = quantityPreview.value.trim();
-            
-            const record = attendanceData.sections[section].attendance[dateStr][index];
-            record[field] = value;
-            const baseField = field.replace('Quantity', '');
-            record[baseField] = !!value; 
-            
-            saveData(); 
-            renderAttendanceTable(); 
-            closeModal('quantity-assistant-modal');
-        });
-        
-        document.getElementById('restore-btn').addEventListener('click', () => restoreFileInput.click());
-        restoreFileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (!confirm('کیا آپ واقعی بیک اپ بحال کرنا چاہتے ہیں؟ موجودہ تمام ڈیٹا مٹا دیا جائے گا۔')) {
-                event.target.value = null; return;
-            }
+        document.getElementById('restore-file-input').addEventListener('change', (event) => {
+            const file = event.target.files[0]; if (!file) return;
+            if (!confirm('کیا آپ واقعی بیک اپ بحال کرنا چاہتے ہیں؟ موجودہ ڈیٹا ضائع ہو جائے گا۔')) { event.target.value = null; return; }
             const reader = new FileReader();
             reader.onload = (e) => {
-                try {
+                try { 
                     const restoredData = JSON.parse(e.target.result);
-                    if (restoredData && restoredData.sections && restoredData.studentDetails) {
+                    if (restoredData && restoredData.sections && restoredData.studentDetails) { 
                         localStorage.setItem(DATA_KEY, JSON.stringify(restoredData));
-                        loadData(); initApp();  
+                        loadData(); 
+                        initApp(); 
                         showToast('بیک اپ کامیابی سے بحال ہو گیا ہے۔');
-                    } else { throw new Error('Invalid file format.'); }
-                } catch (error) { showToast('فائل خراب ہے یا درست فارمیٹ میں نہیں۔'); console.error(error); }
+                    } else { 
+                        throw new Error('Invalid file format.'); 
+                    } 
+                } catch (error) { 
+                    showToast('فائل خراب ہے یا درست فارمیٹ میں نہیں۔'); 
+                }
                 event.target.value = null; 
             };
-            reader.onerror = () => { showToast('فائل پڑھنے میں خرابی ہوئی۔'); event.target.value = null; };
-            reader.readText(file);
-        });
-        
-        document.getElementById('modal-share-pdf').addEventListener('click', () => shareAsUrduPDF(currentModalInfo.studentName));
-        document.getElementById('modal-share-whatsapp').addEventListener('click', () => {
-            const phone = (attendanceData.studentDetails[currentModalInfo.studentName] || {}).phone;
-            if (!phone) return showToast('اس طالب علم کا فون نمبر موجود نہیں');
-            const reportText = generateMonthlyReportText(currentModalInfo.studentName, currentModalInfo.reportDate);
-            window.open(`https://wa.me/${formatPhoneNumberForWhatsApp(phone)}?text=${encodeURIComponent(reportText)}`, '_blank');
+            reader.readAsText(file);
         });
 
-        document.getElementById('prev-month-btn').addEventListener('click', () => {
-            const newDate = new Date(currentModalInfo.reportDate);
-            newDate.setMonth(newDate.getMonth() - 1);
-            renderAndShowStudentReport(currentModalInfo.studentName, newDate);
+        document.body.addEventListener('click', async (e) => {
+            const target = e.target.closest('[data-action]'); if (!target) return;
+            const { action, studentName, field } = target.dataset;
+            const section = sectionSelector.value;
+            const dateStr = currentDate.toISOString().split('T')[0];
+            switch(action) {
+                case 'toggle-watchlist': { const wIndex = attendanceData.watchlist.indexOf(studentName); if (wIndex > -1) attendanceData.watchlist.splice(wIndex, 1); else attendanceData.watchlist.push(studentName); saveData(); renderAttendanceTable(); if(document.getElementById('stats-tab').classList.contains('active')) renderDailyStats(); break; }
+                case 'edit-quantity': { const studentIndex = attendanceData.sections[section].students.indexOf(studentName); if (studentIndex === -1) return; const record = attendanceData.sections[section].attendance[dateStr]?.[studentIndex]; if (!record || !record.present) { showToast('پہلے حاضری لگائیں۔'); return; } currentModalInfo = { studentName, field }; document.getElementById('quantity-title').textContent = `${studentName} - ${field.replace('Quantity','')}`; renderQuantityModule(studentName, field, record); openModal('quantity-modal'); break; }
+                case 'add-student': { currentModalInfo = { isNew: true, section }; document.getElementById('student-modal-title').textContent = 'نیا طالب علم شامل کریں'; ['name', 'phone', 'milestone-start', 'milestone-end', 'homework-para', 'homework-total'].forEach(id => document.getElementById(`student-form-${id}`).value = ''); openModal('student-details-modal'); break; }
+                case 'edit-student': { currentModalInfo = { isNew: false, oldName: studentName, section }; const details = attendanceData.studentDetails[studentName] || {}; document.getElementById('student-modal-title').textContent = `ترمیم: ${studentName}`; document.getElementById('student-form-name').value = studentName; document.getElementById('student-form-phone').value = details.phone || ''; document.getElementById('student-form-milestone-start').value = details.milestoneStart || ''; document.getElementById('student-form-milestone-end').value = details.milestoneEnd || ''; document.querySelector(`input[name="milestoneOrder"][value="${details.milestoneOrder || 'straight'}"]`).checked = true; document.getElementById('student-form-homework-para').value = details.homeworkPara || ''; document.getElementById('student-form-homework-total').value = details.homeworkTotal || ''; openModal('student-details-modal'); break; }
+                case 'delete-student': { if (confirm(`کیا آپ واقعی طالب علم "${studentName}" کو حذف کرنا چاہتے ہیں؟`)) { const studentIndex = attendanceData.sections[section].students.indexOf(studentName); if(studentIndex > -1) { attendanceData.sections[section].students.splice(studentIndex, 1); Object.values(attendanceData.sections[section].attendance).forEach(day => { if(day.length > studentIndex) day.splice(studentIndex, 1); }); delete attendanceData.studentDetails[studentName]; const wIndex = attendanceData.watchlist.indexOf(studentName); if(wIndex > -1) attendanceData.watchlist.splice(wIndex, 1); saveData(); renderStudentManagement(); renderAttendanceTable(); } } break; }
+                case 'save-quantity': { const { studentName: sName, field: f } = currentModalInfo; const sIndex = attendanceData.sections[section].students.indexOf(sName); if(sIndex === -1) return; const value = document.getElementById('quantity-input-text').value.trim(); attendanceData.sections[section].attendance[dateStr][sIndex][f] = value; saveData(); renderAttendanceTable(); closeModal('quantity-modal'); break; }
+                case 'save-student-details': { const newName = document.getElementById('student-form-name').value.trim(); if(!newName) { showToast('طالب علم کا نام لازمی ہے۔'); return; } const students = attendanceData.sections[currentModalInfo.section].students; if(currentModalInfo.isNew) { if(students.includes(newName)) { showToast('اس نام کا طالب علم پہلے سے موجود ہے۔'); return; } students.push(newName); } else if (newName !== currentModalInfo.oldName) { if(students.includes(newName)) { showToast('اس نام کا طالب علم پہلے سے موجود ہے۔'); return; } const oldIndex = students.indexOf(currentModalInfo.oldName); if(oldIndex > -1) students[oldIndex] = newName; if(attendanceData.studentDetails[currentModalInfo.oldName]) { attendanceData.studentDetails[newName] = attendanceData.studentDetails[currentModalInfo.oldName]; delete attendanceData.studentDetails[currentModalInfo.oldName]; } const wIndex = attendanceData.watchlist.indexOf(currentModalInfo.oldName); if(wIndex > -1) attendanceData.watchlist[wIndex] = newName; } attendanceData.studentDetails[newName] = { phone: document.getElementById('student-form-phone').value.trim(), milestoneStart: document.getElementById('student-form-milestone-start').value, milestoneEnd: document.getElementById('student-form-milestone-end').value, milestoneOrder: document.querySelector('input[name="milestoneOrder"]:checked').value, homeworkPara: document.getElementById('student-form-homework-para').value, homeworkTotal: document.getElementById('student-form-homework-total').value }; saveData(); if(document.getElementById('students-tab').classList.contains('active')) renderStudentManagement(); renderAttendanceTable(); closeModal('student-details-modal'); break; }
+                case 'restore': document.getElementById('restore-file-input').click(); break;
+                case 'close-modal': closeModal(target.closest('.modal').id); break;
+                case 'show-report': renderAndShowStudentReport(studentName, new Date()); break;
+                case 'prev-month': currentModalInfo.reportDate.setMonth(currentModalInfo.reportDate.getMonth() - 1); renderAndShowStudentReport(currentModalInfo.studentName, currentModalInfo.reportDate); break;
+                case 'next-month': currentModalInfo.reportDate.setMonth(currentModalInfo.reportDate.getMonth() + 1); renderAndShowStudentReport(currentModalInfo.studentName, currentModalInfo.reportDate); break;
+                case 'message-student': { const details = attendanceData.studentDetails[studentName] || {}; const phone = details.phone; if (phone) { const cleanPhone = phone.replace(/\D/g, ''); window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}`, '_blank'); } else { showToast('اس طالب علم کا فون نمبر محفوظ نہیں ہے۔'); } break; }
+                case 'backup': { try { const dataStr = JSON.stringify(attendanceData, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `hifz_tracker_backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showToast('بیک اپ کامیابی سے ڈاؤنلوڈ ہو گیا۔'); } catch (e) { showToast('بیک اپ بنانے میں خرابی۔'); } break; }
+                case 'share-whatsapp': { const reportTitleText = document.getElementById('student-report-title')?.textContent; const reportTable = document.getElementById('student-report-content')?.querySelector('table'); if (!reportTitleText || !reportTable) { showToast('شیئر کرنے کے لیے کوئی مواد نہیں ہے۔'); return; } let message = `*${reportTitleText}*\n\n`; reportTable.querySelectorAll('tr').forEach((row, index) => { const cells = row.querySelectorAll('th, td'); if (cells.length > 0) { message += Array.from(cells).map(cell => cell.textContent.trim()).join(' | ') + '\n'; if (index === 0) message += '--------------------\n'; } }); message += `\n- Hifaz Tracker App`; try { if (navigator.share) { await navigator.share({ title: 'Hifz Tracker Report', text: message }); } else { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank'); } } catch (e) { showToast('شیئرنگ ممکن نہیں ہے۔'); } break; }
+                case 'share-pdf': { const reportContentEl = document.getElementById('student-report-content'); const reportTitleEl = document.getElementById('student-report-title'); if (!reportContentEl || !reportTitleEl) { showToast('PDF بنانے کے لیے مواد موجود نہیں ہے۔'); return; } showToast('پی ڈی ایف بن رہا ہے...'); try { const canvas = await html2canvas(reportContentEl, { scale: 2, useCORS: true }); const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const imgWidth = pdf.internal.pageSize.getWidth() - 20; const imgHeight = canvas.height * imgWidth / canvas.width; pdf.text(reportTitleEl.textContent, pdf.internal.pageSize.getWidth() / 2, 10, { align: 'center' }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 15, imgWidth, imgHeight); const fileName = `report_${currentModalInfo.studentName}_${Date.now()}.pdf`; pdf.save(fileName); } catch (err) { showToast('PDF بنانے میں خرابی۔'); } break; }
+            }
         });
-        document.getElementById('next-month-btn').addEventListener('click', () => {
-            const newDate = new Date(currentModalInfo.reportDate);
-            newDate.setMonth(newDate.getMonth() + 1);
-            renderAndShowStudentReport(currentModalInfo.studentName, newDate);
-        });
-
-        document.querySelectorAll('.modal .close').forEach(btn => btn.addEventListener('click', () => closeModal(btn.closest('.modal').id)));
-        document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); }));
     })();
-
-    document.getElementById('quick-btns-container').innerHTML = ['لائن', 'صفحہ', 'رکوع', 'آیت', 'ربع', 'آدھا', 'پون', 'سوا', 'مکمل', 'یاد'].map(text => `<button class="quick-btn">${text}</button>`).join('');
-    const paraSelector = document.getElementById('para-selector');
-    paraSelector.innerHTML = '<option value="">پارہ منتخب کریں</option>';
-    for (let i = 1; i <= 30; i++) paraSelector.innerHTML += `<option value="${i}">پارہ نمبر ${i}</option>`;
-
-    // --- ایپ کا آغاز ---
+    
     loadData();
     initApp();
-    requestInitialPermissions();
 });
 </script>
 </body>
