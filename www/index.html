@@ -14,6 +14,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Sab se Ahem Tabdeeli: Capacitor ka Pul (Bridge) -->
+    <script src="capacitor.js"></script>
 
     <style>
         :root {
@@ -220,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentDate = new Date();
     let attendanceData = {};
-    const DATA_KEY = 'attendanceData_v42_negligence';
+    const DATA_KEY = 'attendanceData_v42_final_capacitor'; // Updated key
     let currentModalInfo = {};
     let wakeLock = null;
     
@@ -290,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const getWeekStart = (date) => {
         const d = new Date(date);
-        const day = d.getDay(); // 0=Sun, 5=Fri
+        const day = d.getDay();
         const diff = d.getDate() - (day + 2) % 7;
         d.setDate(diff);
         d.setHours(0, 0, 0, 0);
@@ -461,28 +464,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkWeeklyNegligence = (studentIndex, section) => {
         const negligence = { isNeglectful: false, reasons: [] };
         const found = { lesson: false, homework: false, milestone: false };
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(currentDate);
-            d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            const record = attendanceData.sections[section]?.attendance[dateStr]?.[studentIndex];
-            if (record) {
-                if (record.lessonQuantity) found.lesson = true;
-                if (record.homeworkQuantity) found.homework = true;
-                if (record.milestoneQuantity) found.milestone = true;
-            }
-        }
-        if (!found.lesson) negligence.reasons.push('سبق نہیں سنایا');
-        if (!found.homework) negligence.reasons.push('سبقی نہیں سنائی');
-        if (!found.milestone) negligence.reasons.push('منزل نہیں سنائی');
+        const last7DaysRecords = getLastAttendedRecords(studentIndex, section, 7);
+        last7DaysRecords.forEach(record => {
+            if (record.lessonQuantity) found.lesson = true;
+            if (record.homeworkQuantity) found.homework = true;
+            if (record.milestoneQuantity) found.milestone = true;
+        });
+        
+        if (!found.lesson) negligence.reasons.push('سبق');
+        if (!found.homework) negligence.reasons.push('سبقی');
+        if (!found.milestone) negligence.reasons.push('منزل');
 
         if (negligence.reasons.length > 0) {
             negligence.isNeglectful = true;
         }
         return negligence;
     };
-    
-    // --- تمام معاون فنکشنز یہاں سے شروع ---
     
     const renderStudentManagement = () => {
         const container = document.getElementById('student-list-management');
@@ -509,30 +506,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if(records[index]?.homeworkQuantity) homework.push(`${name} (${records[index].homeworkQuantity})`);
             if(records[index]?.milestoneQuantity) milestone.push(`${name} (${records[index].milestoneQuantity})`);
             
-            const negligenceInfo = checkWeeklyNegligence(index, section);
-            if(negligenceInfo.isNeglectful) {
-                neglectfulStudents.push({ name, reasons: negligenceInfo.reasons.join('، ') });
+            const inactivity = checkInactivity(index, section);
+            const repetition = checkRepetition(index, section);
+            if (Object.values(inactivity).some(v => v) || Object.values(repetition).some(v => v)) {
+                neglectfulStudents.push({ name, reasons: 'مسلسل کوتاہی' });
             }
         });
 
         const createCard = (title, count, names, color) => {
             let content = '';
-            if (Array.isArray(names) && names.length > 0) {
+            if (Array.isArray(names) && names.length > 0 && typeof names[0] === 'string') {
                 content = `<p>${names.join(', ')}</p>`;
-            } else if (typeof names === 'string' && names) {
-                content = names;
+            } else if (Array.isArray(names) && names.length > 0) {
+                content = names.map(s => `<p><strong>${s.name}:</strong> <span class="student-reason">${s.reasons}</span></p>`).join('');
             }
             return `<div class="management-section" style="border-right: 4px solid ${color};"><h4>${title}: ${count}</h4>${content}</div>`;
         };
-
-        const neglectfulStudentsHTML = neglectfulStudents.map(s => `<p><strong>${s.name}:</strong> <span class="student-reason">${s.reasons}</span></p>`).join('');
-
+        
         container.innerHTML = createCard('حاضر', presentCount, [], 'var(--success-color)') 
             + createCard('غیر حاضر', absent.length, absent, 'var(--danger-color)') 
             + createCard('سبق سنانے والے', lesson.length, lesson, 'var(--primary-color)') 
             + createCard('سبقی سنانے والے', homework.length, homework, 'var(--primary-color)') 
             + createCard('منزل سنانے والے', milestone.length, milestone, 'var(--primary-color)')
-            + createCard('غافل طلباء (گزشتہ 7 دن)', neglectfulStudents.length, neglectfulStudentsHTML, 'var(--danger-color)')
+            + createCard('غافل طلباء (مسلسل کوتاہی)', neglectfulStudents.length, neglectfulStudents, 'var(--danger-color)')
             + createCard('خاص توجہ کے لائق طلباء', attendanceData.watchlist.length, attendanceData.watchlist, 'var(--warning-color)');
     };
     
@@ -693,9 +689,80 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'prev-month': currentModalInfo.reportDate.setMonth(currentModalInfo.reportDate.getMonth() - 1); renderAndShowStudentReport(currentModalInfo.studentName, currentModalInfo.reportDate); break;
                 case 'next-month': currentModalInfo.reportDate.setMonth(currentModalInfo.reportDate.getMonth() + 1); renderAndShowStudentReport(currentModalInfo.studentName, currentModalInfo.reportDate); break;
                 case 'message-student': { const details = attendanceData.studentDetails[studentName] || {}; const phone = details.phone; if (phone) { const cleanPhone = phone.replace(/\D/g, ''); window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}`, '_blank'); } else { showToast('اس طالب علم کا فون نمبر محفوظ نہیں ہے۔'); } break; }
-                case 'backup': { try { const dataStr = JSON.stringify(attendanceData, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `hifz_tracker_backup_${new Date().toISOString().split('T')[0]}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showToast('بیک اپ کامیابی سے ڈاؤنلوڈ ہو گیا۔'); } catch (e) { showToast('بیک اپ بنانے میں خرابی۔'); } break; }
-                case 'share-whatsapp': { const reportTitleText = document.getElementById('student-report-title')?.textContent; const reportTable = document.getElementById('student-report-content')?.querySelector('table'); if (!reportTitleText || !reportTable) { showToast('شیئر کرنے کے لیے کوئی مواد نہیں ہے۔'); return; } let message = `*${reportTitleText}*\n\n`; reportTable.querySelectorAll('tr').forEach((row, index) => { const cells = row.querySelectorAll('th, td'); if (cells.length > 0) { message += Array.from(cells).map(cell => cell.textContent.trim()).join(' | ') + '\n'; if (index === 0) message += '--------------------\n'; } }); message += `\n- Hifaz Tracker App`; try { if (navigator.share) { await navigator.share({ title: 'Hifz Tracker Report', text: message }); } else { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`, '_blank'); } } catch (e) { showToast('شیئرنگ ممکن نہیں ہے۔'); } break; }
-                case 'share-pdf': { const reportContentEl = document.getElementById('student-report-content'); const reportTitleEl = document.getElementById('student-report-title'); if (!reportContentEl || !reportTitleEl) { showToast('PDF بنانے کے لیے مواد موجود نہیں ہے۔'); return; } showToast('پی ڈی ایف بن رہا ہے...'); try { const canvas = await html2canvas(reportContentEl, { scale: 2, useCORS: true }); const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' }); const imgWidth = pdf.internal.pageSize.getWidth() - 20; const imgHeight = canvas.height * imgWidth / canvas.width; pdf.text(reportTitleEl.textContent, pdf.internal.pageSize.getWidth() / 2, 10, { align: 'center' }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 15, imgWidth, imgHeight); const fileName = `report_${currentModalInfo.studentName}_${Date.now()}.pdf`; pdf.save(fileName); } catch (err) { showToast('PDF بنانے میں خرابی۔'); } break; }
+                
+                // --- Capacitor Native Functions ---
+                case 'backup': {
+                    try {
+                        const { Filesystem, Directory, Encoding } = Capacitor.Plugins;
+                        const fileName = `hifz_tracker_backup_${new Date().toISOString().split('T')[0]}.json`;
+                        const dataStr = JSON.stringify(attendanceData, null, 2);
+                        await Filesystem.writeFile({ path: fileName, data: dataStr, directory: Directory.Downloads, encoding: Encoding.UTF8 });
+                        showToast(`بیک اپ Downloads فولڈر میں محفوظ ہو گیا`);
+                    } catch (e) {
+                        console.error('Backup Error:', e);
+                        showToast('بیک اپ محفوظ کرنے میں خرابی۔');
+                    }
+                    break;
+                }
+                case 'share-whatsapp': {
+                    try {
+                        const { Share } = Capacitor.Plugins;
+                        const reportTitleText = document.getElementById('student-report-title')?.textContent;
+                        const reportTable = document.getElementById('student-report-content')?.querySelector('table');
+                        if (!reportTitleText || !reportTable) { showToast('شیئر کرنے کے liye koi mawaad nahi hai.'); return; }
+                        let message = `*${reportTitleText}*\n\n`;
+                        reportTable.querySelectorAll('tr').forEach((row, index) => {
+                            const cells = row.querySelectorAll('th, td');
+                            if (cells.length > 0) {
+                                message += Array.from(cells).map(cell => cell.textContent.trim()).join(' | ') + '\n';
+                                if (index === 0) message += '--------------------\n';
+                            }
+                        });
+                        message += `\n- Hifaz Tracker App`;
+                        await Share.share({ title: 'Hifaz Tracker Report', text: message, dialogTitle: 'رپورٹ شیئر کریں' });
+                    } catch(e) {
+                        console.error('Share Error:', e);
+                        showToast('شیئرنگ ممکن نہیں ہے۔');
+                    }
+                    break;
+                }
+                case 'share-pdf': {
+                    try {
+                        const { Filesystem, Directory, Share } = Capacitor.Plugins;
+                        const reportContentEl = document.getElementById('student-report-content');
+                        const reportTitleEl = document.getElementById('student-report-title');
+                        if (!reportContentEl || !reportTitleEl) { showToast('PDF banane ke liye mawaad mojood nahi hai.'); return; }
+                        showToast('پی ڈی ایف بن رہا ہے...');
+                        
+                        const canvas = await html2canvas(reportContentEl, { scale: 2, useCORS: true });
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+                        const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        pdf.text(reportTitleEl.textContent, pdf.internal.pageSize.getWidth() / 2, 10, { align: 'center' });
+                        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 15, imgWidth, imgHeight);
+                        
+                        const pdfBase64 = pdf.output('datauristring').split(',')[1];
+                        const fileName = `report_${currentModalInfo.studentName}_${Date.now()}.pdf`;
+
+                        const result = await Filesystem.writeFile({
+                            path: fileName,
+                            data: pdfBase64,
+                            directory: Directory.Cache
+                        });
+                        
+                        await Share.share({
+                            title: `Report for ${currentModalInfo.studentName}`,
+                            url: result.uri,
+                            dialogTitle: 'PDF رپورٹ شیئر کریں'
+                        });
+
+                    } catch(err) {
+                        console.error('PDF Share Error:', err);
+                        showToast('PDF شیئر کرنے میں خرابی۔');
+                    }
+                    break;
+                }
             }
         });
     })();
