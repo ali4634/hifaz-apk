@@ -26,32 +26,29 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
-      # 4. Tamam packages install karna
+      # 4. Tamam packages install karna (Iske baad capacitor.js mojood hoga)
       - name: Install dependencies
         run: npm install
 
-      # 5. Android platform ko add karna
+      # 5. YEH HAI JADUI AUR HATTMI HAL
+      # capacitor.js ko seedha uski factory (node_modules) se www folder mein copy karna
+      - name: Copy capacitor.js from node_modules to web dir
+        run: cp node_modules/@capacitor/android/capacitor.js www/capacitor.js
+
+      # 6. Android platform ko add karna
       - name: Add Android platform
         run: npx cap add android
 
-      # 6. Sync chalana (TAKE YEH ROOT FOLDER MEIN capacitor.js BANA DE)
-      - name: Sync Capacitor project (Generates capacitor.js)
-        run: npx cap sync
-
-      # 7. Ab jab file ban chuki hai, use sahi jagah (www) par copy karna
-      - name: Copy capacitor.js to web asset directory
-        run: cp capacitor.js www/
-
-      # 8. Ek baar phir sync chalana (TAKE NAYA COPY SHUDA ANDROID PROJECT UPDATE HO JAYE)
-      - name: Final Sync of the project
-        run: npx cap sync
-
-      # 9. APK banana
+      # 7. Ab project ko sync karna (Ab use capacitor.js mil jayega)
+      - name: Sync Capacitor project with Android
+        run: npx cap sync android
+      
+      # 8. APK banana
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
 
-      # 10. APK ko upload karna
+      # 9. APK ko upload karna
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
