@@ -9,37 +9,49 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # 1. Code ko download karna
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Node.js set up karna
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # 3. Java set up karna
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
       
+      # 4. Tamam packages install karna
       - name: Install dependencies
         run: npm install
 
+      # 5. Android platform ko add karna
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Sync Capacitor project (This creates capacitor.js)
+      # 6. Sync chalana (TAKE YEH ROOT FOLDER MEIN capacitor.js BANA DE)
+      - name: Sync Capacitor project (Generates capacitor.js)
         run: npx cap sync
 
-      # Yeh woh JADUI qadam hai jo sab kuch theek kar dega
+      # 7. Ab jab file ban chuki hai, use sahi jagah (www) par copy karna
       - name: Copy capacitor.js to web asset directory
-        run: cp capacitor.js www/capacitor.js
-      
+        run: cp capacitor.js www/
+
+      # 8. Ek baar phir sync chalana (TAKE NAYA COPY SHUDA ANDROID PROJECT UPDATE HO JAYE)
+      - name: Final Sync of the project
+        run: npx cap sync
+
+      # 9. APK banana
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
 
+      # 10. APK ko upload karna
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
