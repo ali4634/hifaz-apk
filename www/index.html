@@ -30,7 +30,7 @@
             background-color: #f5f7fa; direction: rtl; font-size: 15px; color: #333;
             line-height: 1.6; overscroll-behavior-y: contain; transition: background-color 0.3s, color 0.3s;
         }
-        /* --- ڈارک تھیم --- */
+        /* --- Dark Theme --- */
         body.dark-theme { background-color: #121212; color: #e0e0e0; }
         .dark-theme .container, .dark-theme .modal-content, .dark-theme .management-section, .dark-theme .student-progress-container { background-color: #1e1e1e; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); border-color: #444; }
         .dark-theme h1, .dark-theme h2, .dark-theme h3, .dark-theme h4, .dark-theme h5 { color: #f5f5f5; }
@@ -52,7 +52,7 @@
         .dark-theme .small-btn { background-color: #555; }
         .dark-theme .progress-bar-background { background-color: #555; }
 
-        /* تھیم ٹوگل بٹن */
+        /* --- General Styles --- */
         #theme-toggle { position: absolute; top: 15px; left: 15px; background: none; border: 1px solid #ccc; color: #888; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2em; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .dark-theme #theme-toggle { border-color: #555; color: #f1f1f1; }
         .container { position:relative; max-width: 100%; margin: 0 auto; background-color: white; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); }
@@ -88,7 +88,6 @@
         .management-section { margin: 15px 0; padding: 12px; background-color: #f8f9fa; border-radius: var(--border-radius); border: 1px solid #ddd; }
         .small-btn { padding: 5px 8px; margin: 2px; font-size: 0.8em; border: none; border-radius: var(--border-radius); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; background-color: var(--secondary-color); color:white; }
         .attendance-check { transform: scale(1.5); cursor: pointer; }
-        .dark-theme .attendance-check { accent-color: var(--primary-color); }
         .watchlist-star { color: #ccc; cursor: pointer; font-size: 1.2em; transition: color 0.3s; vertical-align: middle; }
         .watchlist-star.active { color: var(--warning-color); }
         .attendance-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
@@ -106,13 +105,11 @@
         .radio-group label { display: flex; align-items: center; gap: 5px; }
         .month-selector { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
         .share-buttons { display: flex; gap: 12px; margin-top: 15px; justify-content: center; }
-        
         .weekly-dots-graph { display: flex; gap: 3px; justify-content: center; direction: ltr; }
         .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #e0e0e0; }
         .status-dot.blue { background-color: var(--primary-color); }
         .status-dot.red { background-color: var(--danger-color); }
         .status-dot.grey { background-color: #bdc3c7; }
-
         .student-progress-container { margin-bottom: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: var(--border-radius); }
         .progress-bar-background { width: 100%; background-color: #ecf0f1; border-radius: 10px; overflow: hidden; height: 20px; border: 1px solid #bdc3c7; }
         .progress-bar-fill { height: 100%; width: 0%; background: repeating-linear-gradient(45deg, var(--primary-color), var(--primary-color) 10px, var(--secondary-color) 10px, var(--secondary-color) 20px); transition: width 0.5s ease-in-out; text-align: left; color: white; font-size: 0.8em; line-height: 20px; padding-left: 8px; direction: ltr; box-sizing: border-box;}
@@ -223,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let currentDate = new Date();
     let attendanceData = {};
-    const DATA_KEY = 'attendanceData_v42_final_capacitor'; // Updated key
+    const DATA_KEY = 'attendanceData_v43_final';
     let currentModalInfo = {};
     let wakeLock = null;
     
@@ -242,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['section1', 'section2', 'section3'].forEach(s => {
             attendanceData.sections[s] = attendanceData.sections[s] || { students: [], attendance: {} };
         });
-        sectionSelector.value = localStorage.getItem('lastSection_v42') || 'section1';
+        sectionSelector.value = localStorage.getItem('lastSection_v43') || 'section1';
         applyTheme(attendanceData.settings.theme);
         const wakeLockToggle = document.getElementById('wake-lock-toggle');
         if(wakeLockToggle) {
@@ -461,26 +458,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return result;
     };
     
-    const checkWeeklyNegligence = (studentIndex, section) => {
-        const negligence = { isNeglectful: false, reasons: [] };
-        const found = { lesson: false, homework: false, milestone: false };
-        const last7DaysRecords = getLastAttendedRecords(studentIndex, section, 7);
-        last7DaysRecords.forEach(record => {
-            if (record.lessonQuantity) found.lesson = true;
-            if (record.homeworkQuantity) found.homework = true;
-            if (record.milestoneQuantity) found.milestone = true;
-        });
-        
-        if (!found.lesson) negligence.reasons.push('سبق');
-        if (!found.homework) negligence.reasons.push('سبقی');
-        if (!found.milestone) negligence.reasons.push('منزل');
-
-        if (negligence.reasons.length > 0) {
-            negligence.isNeglectful = true;
-        }
-        return negligence;
-    };
-    
     const renderStudentManagement = () => {
         const container = document.getElementById('student-list-management');
         const section = sectionSelector.value;
@@ -602,6 +579,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const manageWakeLock = async () => { if (!('wakeLock' in navigator)) { document.getElementById('wake-lock-toggle').disabled = true; return; } try { if (attendanceData.settings.wakeLock && document.visibilityState === 'visible') { if (wakeLock === null) { wakeLock = await navigator.wakeLock.request('screen'); } } else if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } } catch (err) { if(wakeLock) await wakeLock.release(); wakeLock = null; } };
     const applyFilters = () => { const searchTerm = document.getElementById('search-attendance').value.trim().toLowerCase(); const showWatchedOnly = document.getElementById('watchlist-toggle').checked; attendanceTableBody.querySelectorAll('tr').forEach(row => { const studentNameEl = row.querySelector('.student-name'); const starEl = row.querySelector('.watchlist-star'); if (studentNameEl && starEl) { const studentName = studentNameEl.textContent.trim().toLowerCase(); const isOnWatchlist = starEl.classList.contains('active'); const searchMatch = studentName.includes(searchTerm); const watchlistMatch = !showWatchedOnly || isOnWatchlist; row.style.display = (searchMatch && watchlistMatch) ? '' : 'none'; } }); };
 
+    // Permissions check function
+    const checkAndRequestStoragePermission = async () => {
+        try {
+            const { Filesystem } = Capacitor.Plugins;
+            // Modern Android versions handle permissions automatically via scoped storage.
+            // For older versions, this check might be necessary, but Capacitor handles it mostly.
+            // A simple check can be to try a dry-run write.
+            let status = await Filesystem.checkPermissions();
+            if (status.publicStorage !== 'granted') {
+                status = await Filesystem.requestPermissions();
+            }
+            return status.publicStorage === 'granted';
+        } catch (e) {
+            console.error("Permission check failed", e);
+            // This will fail on web, so we gracefully ignore it.
+            return true; // Assume permission is granted on web.
+        }
+    };
+
     (function setupListeners() {
         themeToggle.addEventListener('click', () => { const newTheme=document.body.classList.contains('dark-theme')?'light':'dark'; attendanceData.settings.theme=newTheme; applyTheme(newTheme); saveData(); });
         document.getElementById('wake-lock-toggle').addEventListener('change', (e) => { attendanceData.settings.wakeLock = e.target.checked; manageWakeLock(); saveData(); });
@@ -609,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('search-attendance').addEventListener('input', applyFilters);
         document.getElementById('watchlist-toggle').addEventListener('change', applyFilters);
         document.getElementById('date-picker').addEventListener('change', (e) => { currentDate = e.target.valueAsDate ? new Date(e.target.valueAsDate.valueOf() + e.target.valueAsDate.getTimezoneOffset() * 60000) : new Date(); initApp(); });
-        sectionSelector.addEventListener('change', () => { localStorage.setItem('lastSection_v42', sectionSelector.value); initApp(); if(document.getElementById('performance-tab').classList.contains('active')) renderPerformanceTab(); });
+        sectionSelector.addEventListener('change', () => { localStorage.setItem('lastSection_v43', sectionSelector.value); initApp(); if(document.getElementById('performance-tab').classList.contains('active')) renderPerformanceTab(); });
         
         document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', function(e) {
             document.querySelector('.tab.active')?.classList.remove('active');
@@ -635,9 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('quantity-title').textContent = `${studentName} - ${field.replace('Quantity','')}`; 
                         renderQuantityModule(studentName, field, record); 
                         openModal('quantity-modal'); 
-                    } else if (!e.target.checked) {
-                        record[task + 'Quantity'] = ''; 
-                    }
+                    } else if (!e.target.checked) { record[task + 'Quantity'] = ''; }
                 } else { 
                     record.present = e.target.checked; 
                     if(!e.target.checked) { record.lessonQuantity = ''; record.homeworkQuantity = ''; record.milestoneQuantity = ''; } 
@@ -659,12 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadData(); 
                         initApp(); 
                         showToast('بیک اپ کامیابی سے بحال ہو گیا ہے۔');
-                    } else { 
-                        throw new Error('Invalid file format.'); 
-                    } 
-                } catch (error) { 
-                    showToast('فائل خراب ہے یا درست فارمیٹ میں نہیں۔'); 
-                }
+                    } else { throw new Error('Invalid file format.'); } 
+                } catch (error) { showToast('فائل خراب ہے یا درست فارمیٹ میں نہیں۔'); }
                 event.target.value = null; 
             };
             reader.readAsText(file);
@@ -690,13 +680,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'next-month': currentModalInfo.reportDate.setMonth(currentModalInfo.reportDate.getMonth() + 1); renderAndShowStudentReport(currentModalInfo.studentName, currentModalInfo.reportDate); break;
                 case 'message-student': { const details = attendanceData.studentDetails[studentName] || {}; const phone = details.phone; if (phone) { const cleanPhone = phone.replace(/\D/g, ''); window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}`, '_blank'); } else { showToast('اس طالب علم کا فون نمبر محفوظ نہیں ہے۔'); } break; }
                 
-                // --- Capacitor Native Functions ---
+                // --- Mukammal Taur Par Theek Kiye Hue Capacitor Functions ---
                 case 'backup': {
                     try {
+                        const hasPermission = await checkAndRequestStoragePermission();
+                        if (!hasPermission) {
+                            showToast('فائل محفوظ کرنے کی اجازت درکار ہے۔');
+                            return;
+                        }
                         const { Filesystem, Directory, Encoding } = Capacitor.Plugins;
                         const fileName = `hifz_tracker_backup_${new Date().toISOString().split('T')[0]}.json`;
                         const dataStr = JSON.stringify(attendanceData, null, 2);
-                        await Filesystem.writeFile({ path: fileName, data: dataStr, directory: Directory.Downloads, encoding: Encoding.UTF8 });
+                        await Filesystem.writeFile({ path: fileName, data: dataStr, directory: Directory.Downloads, encoding: Encoding.UTF8, recursive: true });
                         showToast(`بیک اپ Downloads فولڈر میں محفوظ ہو گیا`);
                     } catch (e) {
                         console.error('Backup Error:', e);
@@ -709,7 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const { Share } = Capacitor.Plugins;
                         const reportTitleText = document.getElementById('student-report-title')?.textContent;
                         const reportTable = document.getElementById('student-report-content')?.querySelector('table');
-                        if (!reportTitleText || !reportTable) { showToast('شیئر کرنے کے liye koi mawaad nahi hai.'); return; }
+                        if (!reportTitleText || !reportTable) { showToast('شیئر کرنے کے لئے کوئی مواد نہیں ہے۔'); return; }
                         let message = `*${reportTitleText}*\n\n`;
                         reportTable.querySelectorAll('tr').forEach((row, index) => {
                             const cells = row.querySelectorAll('th, td');
@@ -728,10 +723,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 case 'share-pdf': {
                     try {
+                        const hasPermission = await checkAndRequestStoragePermission();
+                        if (!hasPermission) {
+                            showToast('فائل بنانے کی اجازت درکار ہے۔');
+                            return;
+                        }
                         const { Filesystem, Directory, Share } = Capacitor.Plugins;
                         const reportContentEl = document.getElementById('student-report-content');
                         const reportTitleEl = document.getElementById('student-report-title');
-                        if (!reportContentEl || !reportTitleEl) { showToast('PDF banane ke liye mawaad mojood nahi hai.'); return; }
+                        if (!reportContentEl || !reportTitleEl) { showToast('PDF بنانے کے لئے مواد موجود نہیں ہے۔'); return; }
                         showToast('پی ڈی ایف بن رہا ہے...');
                         
                         const canvas = await html2canvas(reportContentEl, { scale: 2, useCORS: true });
