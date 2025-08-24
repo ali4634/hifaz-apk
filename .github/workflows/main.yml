@@ -9,46 +9,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Code ko download karna
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Node.js set up karna
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      # 3. Java set up karna
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
       
-      # 4. Tamam packages install karna
-      - name: Install dependencies
-        run: npm install
+      - name: Clean Install Dependencies
+        run: npm cache clean --force && npm install
 
-      # 5. YEH HAI HATTMI AUR 100% KAMYAB HAL
-      # Capacitor ko hukm dena ke woh capacitor.js ko seedha www folder mein banaye
-      - name: Copy web assets and generate capacitor.js in www folder
-        run: npx cap copy
-
-      # 6. Android platform ko add karna
       - name: Add Android platform
         run: npx cap add android
 
-      # 7. Ab project ko sync karna (Ab use capacitor.js mil jayega)
-      - name: Sync Capacitor project with Android
-        run: npx cap sync android
-      
-      # 8. APK banana
+      - name: Copy web assets and generate capacitor.js
+        run: npx cap copy
+
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
 
-      # 9. APK ko upload karna
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
