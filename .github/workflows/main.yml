@@ -31,6 +31,7 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      # Yeh sab se ahem command hai
       - name: Copy web assets and generate capacitor.js
         run: npx cap copy
 
