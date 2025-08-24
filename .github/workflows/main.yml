@@ -24,6 +24,7 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
+      # Yahan npm ci ki jagah npm install istemal kiya gaya hai
       - name: Clean Install Dependencies
         run: npm cache clean --force && npm install
 
