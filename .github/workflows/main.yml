@@ -12,7 +12,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Yahan se 'cache: npm' wali line hata di gayi hai
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -23,10 +22,15 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-      
-      # Ab yeh command zaroor chalegi
+
       - name: Install Dependencies
         run: npm install
+
+      # Plugins لازمی انسٹال کریں
+      - name: Install Capacitor Plugins
+        run: |
+          npm install @capacitor/filesystem @capacitor/share
+          npx cap sync
 
       - name: Add Android platform
         run: npx cap add android
