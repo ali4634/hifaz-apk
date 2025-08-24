@@ -12,11 +12,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Yahan se 'cache: npm' wali line hata di gayi hai
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -24,14 +24,13 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
       
-      # Yahan npm ci ki jagah npm install istemal kiya gaya hai
-      - name: Clean Install Dependencies
-        run: npm cache clean --force && npm install
+      # Ab yeh command zaroor chalegi
+      - name: Install Dependencies
+        run: npm install
 
       - name: Add Android platform
         run: npx cap add android
 
-      # Yeh sab se ahem command hai
       - name: Copy web assets and generate capacitor.js
         run: npx cap copy
 
